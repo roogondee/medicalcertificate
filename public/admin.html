@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ระบบใบรับรองแพทย์ | W Medical Hospital</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--b:#12428f;--bd:#0b2f68;--bl:#eef3fb;--ok:#0f7a4d;--okb:#e7f6ee;--wn:#8a5a00;--wnb:#fdf3e0;--bad:#a11d1d;--badb:#fdeaea;--ink:#16202f;--mu:#657288;--ln:#e2e7ef}
+body{font-family:Sarabun,system-ui,sans-serif;background:#f4f6fa;color:var(--ink);font-size:14px;line-height:1.55}
+a{color:var(--b)}
+/* login */
+#login{max-width:380px;margin:9vh auto;background:#fff;border:1px solid var(--ln);border-radius:16px;padding:28px 26px;box-shadow:0 4px 22px rgba(18,66,143,.09)}
+#login h1{font-size:18px;margin-bottom:3px}
+#login p.s{color:var(--mu);font-size:13px;margin-bottom:18px}
+label{display:block;font-size:12.5px;color:var(--mu);margin:10px 0 3px;font-weight:600}
+input,select,textarea{width:100%;padding:9px 11px;border:1.5px solid var(--ln);border-radius:9px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--b)}
+button{font-family:inherit;font-size:14px;font-weight:600;border:0;border-radius:9px;padding:9px 16px;background:var(--b);color:#fff;cursor:pointer}
+button:hover{background:var(--bd)}
+button.gh{background:#fff;color:var(--b);border:1.5px solid var(--ln)}
+button.gh:hover{background:var(--bl)}
+button.dg{background:#fff;color:var(--bad);border:1.5px solid #f0d4d4}
+button.sm{padding:5px 10px;font-size:12.5px;border-radius:7px}
+.err{color:var(--bad);font-size:13px;margin-top:10px;min-height:18px}
+.okmsg{color:var(--ok);font-size:13px;margin-top:10px;min-height:18px}
+/* shell */
+header{background:linear-gradient(160deg,var(--b),var(--bd));color:#fff;padding:14px 0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+header .wrap{display:flex;align-items:center;gap:12px}
+.logo{width:38px;height:38px;background:#fff;border-radius:9px;display:grid;place-items:center;flex:0 0 38px}
+.logo svg{width:24px;height:24px}
+header h1{font-size:15.5px;font-weight:700}
+header p{font-size:11.5px;opacity:.82}
+header .sp{flex:1}
+header .who{font-size:12px;opacity:.9;text-align:right}
+nav{background:#fff;border-bottom:1px solid var(--ln);position:sticky;top:0;z-index:20}
+nav .wrap{display:flex;gap:2px;overflow-x:auto}
+nav button{background:none;color:var(--mu);border-radius:0;border-bottom:2.5px solid transparent;padding:12px 14px;white-space:nowrap}
+nav button:hover{background:var(--bl);color:var(--b)}
+nav button.on{color:var(--b);border-bottom-color:var(--b)}
+main{padding:20px 0 60px}
+.card{background:#fff;border:1px solid var(--ln);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{font-size:15px;margin-bottom:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row>div{flex:1;min-width:150px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.tools input[type=search]{max-width:320px}
+table.list{width:100%;border-collapse:collapse;font-size:13px}
+table.list th{text-align:left;font-size:11.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--b);background:var(--bl);padding:9px 8px}
+table.list td{padding:8px;border-bottom:1px solid #f1f4f8;vertical-align:middle}
+table.list tr:hover td{background:#fafbfd}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:99px}
+.p-ok{background:var(--okb);color:var(--ok)}.p-wn{background:var(--wnb);color:var(--wn)}.p-bad{background:var(--badb);color:var(--bad)}
+.mono{font-variant-numeric:tabular-nums}
+.stat{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.stat div{flex:1;min-width:130px;background:#fff;border:1px solid var(--ln);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-size:22px;color:var(--b);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--mu)}
+fieldset{border:1px solid var(--ln);border-radius:11px;padding:12px 14px;margin-bottom:12px}
+legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
+.chk{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+.chk label{display:flex;align-items:center;gap:5px;margin:0;color:var(--ink);font-weight:400;font-size:13.5px}
+.chk input{width:auto}
+.hide{display:none!important}
+.hint{font-size:12px;color:var(--mu);margin-top:6px}
+#printarea{display:none}
+@media print{
+  body{background:#fff}
+  body>*{display:none!important}
+  #printarea{display:block!important}
+  #printarea .sheet{box-shadow:none;page-break-after:always;width:100%;padding:14mm 12mm}
+  @page{size:A4;margin:0}
+}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h1>ระบบใบรับรองแพทย์</h1>
+  <p class="s">โรงพยาบาล ดับเบิ้ลยู เมดิคอล — สำหรับเจ้าหน้าที่</p>
+  <form id="lf">
+    <label>อีเมล</label><input id="le" type="email" autocomplete="username" required>
+    <label>รหัสผ่าน</label><input id="lp" type="password" autocomplete="current-password" required>
+    <div style="margin-top:16px"><button style="width:100%" type="submit">เข้าสู่ระบบ</button></div>
+    <div class="err" id="lerr"></div>
+  </form>
+</div>
+
+<div id="shell" class="hide">
+<header><div class="wrap">
+  <div class="logo"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M6 16h17l12 44 12-44h6l12 44 12-44h17L77 84H62L50 44 38 84H23L6 16z" fill="#12428f"/></svg></div>
+  <div><h1>ระบบใบรับรองแพทย์</h1><p>โรงพยาบาล ดับเบิ้ลยู เมดิคอล</p></div>
+  <div class="sp"></div>
+  <div class="who"><span id="whoami"></span><br><a href="#" id="logout" style="color:#fff">ออกจากระบบ</a></div>
+</div></header>
+
+<nav><div class="wrap">
+  <button data-t="list" class="on">รายการใบรับรอง</button>
+  <button data-t="edit">เพิ่มใบรับรอง</button>
+  <button data-t="import">นำเข้า Excel/CSV</button>
+  <button data-t="audit">ประวัติการแก้ไข</button>
+</div></nav>
+
+<main class="wrap">
+
+  <section id="t-list">
+    <div class="stat">
+      <div><b id="s-all">–</b><span>ใบรับรองทั้งหมด</span></div>
+      <div><b id="s-ok">–</b><span>ยังไม่หมดอายุ</span></div>
+      <div><b id="s-soon">–</b><span>ใกล้หมดอายุ (≤14 วัน)</span></div>
+      <div><b id="s-exp">–</b><span>หมดอายุ/ยกเลิก</span></div>
+    </div>
+    <div class="card">
+      <div class="tools">
+        <input type="search" id="q" placeholder="ค้นหา ชื่อ / passport / HN">
+        <select id="fstat" style="width:auto"><option value="">ทุกสถานะ</option><option value="valid">ยังไม่หมดอายุ</option><option value="soon">ใกล้หมดอายุ</option><option value="expired">หมดอายุ</option><option value="void">ยกเลิกแล้ว</option></select>
+        <button class="gh sm" id="reload">รีเฟรช</button>
+        <div style="flex:1"></div>
+        <button class="gh sm" id="selall">เลือกทั้งหมด</button>
+        <button class="sm" id="printsel">พิมพ์ที่เลือก</button>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="list">
+        <thead><tr><th style="width:28px"></th><th>HN</th><th>ชื่อ – สกุล</th><th>Passport</th><th>สัญชาติ</th><th>วันที่ตรวจ</th><th>หมดอายุ</th><th>สถานะ</th><th></th></tr></thead>
+        <tbody id="tb"><tr><td colspan="9" style="color:var(--mu);padding:22px">กำลังโหลด…</td></tr></tbody>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="t-edit" class="hide">
+    <div class="card">
+      <h2 id="eh">เพิ่มใบรับรองแพทย์</h2>
+      <form id="ef">
+        <input type="hidden" id="f-id">
+        <fieldset><legend>ประเภทแบบฟอร์ม</legend>
+          <div class="row"><div style="max-width:420px"><label>เลือกแบบฟอร์มใบรับรอง</label>
+          <select id="f-form_type">
+            <option value="alien_worker">ใบรับรองแพทย์ ตรวจสุขภาพคนต่างด้าว/แรงงานต่างด้าว (90 วัน)</option>
+            <option value="five_disease">ใบรับรองแพทย์ 5 โรค (1 เดือน)</option>
+          </select></div></div>
+        </fieldset>
+        <fieldset><legend>ผู้รับการตรวจ</legend>
+          <div class="row">
+            <div style="flex:2"><label>ชื่อ – สกุล (ภาษาอังกฤษ) *</label><input id="f-patient_name" required></div>
+            <div><label>เลขที่ passport / บัตรประจำตัว</label><input id="f-doc_no"></div>
+          </div>
+          <div class="row">
+            <div><label>วัน/เดือน/ปีเกิด</label><input id="f-dob" type="date"></div>
+            <div><label>อายุ (ปี)</label><input id="f-age" type="number" min="0" max="120"></div>
+            <div><label>เมืองที่เกิด</label><input id="f-birth_city"></div>
+            <div><label>ประเทศ</label><input id="f-country"></div>
+            <div><label>สัญชาติ</label><input id="f-nationality"></div>
+            <div><label>อาชีพ</label><input id="f-occupation" value="กรรมกร"></div>
+          </div>
+        </fieldset>
+        <fieldset class="only-alien"><legend>นายจ้าง / สถานประกอบการ</legend>
+          <div class="row">
+            <div><label>ชื่อนายจ้าง</label><input id="f-employer_name"></div>
+          </div>
+          <div class="row">
+            <div><label>ที่อยู่นายจ้าง</label><input id="f-employer_addr"></div>
+          </div>
+        </fieldset>
+        <fieldset><legend>การตรวจ</legend>
+          <div class="row">
+            <div><label>วันที่ตรวจ *</label><input id="f-exam_date" type="date" required></div>
+            <div><label>อายุใบรับรอง (วัน)</label><input id="f-valid_days" type="number" value="90"></div>
+            <div><label>ความสูง (ซม.)</label><input id="f-height" type="number" step="0.1"></div>
+            <div><label>น้ำหนัก (กก.)</label><input id="f-weight" type="number" step="0.1"></div>
+            <div><label>สีผิว</label><input id="f-skin_color" value="ดำแดง"></div>
+            <div><label>สภาพร่างกาย จิตใจทั่วไป</label><input id="f-general_condition" value="ปกติ"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div><label>แพทย์ผู้ตรวจ</label><input id="f-doctor_name" value="นายแพทย์มานิตย์ จารุวรรณ"></div>
+            <div><label>เลขที่ใบประกอบวิชาชีพ</label><input id="f-doctor_license" value="ว.10291"></div>
+          </div>
+        </fieldset>
+        <fieldset class="only-alien"><legend>ผลการตรวจ</legend><div id="tests" class="row"></div>
+          <div class="row" style="margin-top:8px"><div><label>ผลตรวจอื่นๆ (ถ้ามี)</label><input id="f-other_results"></div></div>
+        </fieldset>
+        <fieldset class="only-alien"><legend>สรุปผลการตรวจ</legend>
+          <div class="chk">
+            <label><input type="radio" name="sum" value="healthy" checked> 1) สุขภาพสมบูรณ์ดี</label>
+            <label><input type="radio" name="sum" value="treat"> 2) ผ่าน แต่ต้องรักษา/ติดตาม</label>
+            <label><input type="radio" name="sum" value="fail"> 3) ไม่ผ่านการตรวจสุขภาพ</label>
+          </div>
+          <div class="chk" style="margin-top:8px" id="disbox"></div>
+        </fieldset>
+        <fieldset class="only-five hide"><legend>ข้อมูลใบรับรองแพทย์ 5 โรค</legend>
+          <div class="row">
+            <div><label>เล่มที่</label><input id="x-book_no"></div>
+            <div><label>เลขบัตรประจำตัวประชาชน (13 หลัก)</label><input id="x-national_id" maxlength="17"></div>
+            <div style="flex:2"><label>สถานที่อยู่ (ที่สามารถติดต่อได้)</label><input id="x-contact_addr"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div><label>ความดันโลหิต (มม.ปรอท)</label><input id="x-bp" placeholder="120/80"></div>
+            <div><label>ชีพจร (ครั้ง/นาที)</label><input id="x-pulse"></div>
+            <div><label>สถานที่ตรวจ</label><input id="x-exam_place" value="โรงพยาบาลดับเบิ้ลยู เมดิคอล"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div><label>โรคประจำตัว</label><select id="x-h_chronic"><option value="no">ไม่มี</option><option value="yes">มี</option></select></div>
+            <div style="flex:2"><label>ระบุ</label><input id="x-h_chronic_detail"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div><label>อุบัติเหตุ และ ผ่าตัด</label><select id="x-h_accident"><option value="no">ไม่มี</option><option value="yes">มี</option></select></div>
+            <div style="flex:2"><label>ระบุ</label><input id="x-h_accident_detail"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div><label>เคยเข้ารับการรักษาในโรงพยาบาล</label><select id="x-h_hospital"><option value="no">ไม่มี</option><option value="yes">มี</option></select></div>
+            <div style="flex:2"><label>ระบุ</label><input id="x-h_hospital_detail"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div style="flex:2"><label>ประวัติอื่นที่สำคัญ</label><input id="x-h_other"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div><label>สภาพร่างกายทั่วไป</label><select id="x-general"><option value="normal">ปกติ</option><option value="abnormal">ผิดปกติ</option></select></div>
+            <div style="flex:2"><label>ระบุ (ถ้าผิดปกติ)</label><input id="x-general_detail"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div style="flex:2"><label>สรุปความเห็นและข้อแนะนำของแพทย์</label><input id="x-doctor_opinion"></div>
+          </div>
+        </fieldset>
+        <div class="row" style="margin-top:4px">
+          <div style="flex:0 0 auto"><button type="submit" id="save">บันทึก</button></div>
+          <div style="flex:0 0 auto"><button type="button" class="gh" id="cancel">ล้างฟอร์ม</button></div>
+          <div style="flex:0 0 auto"><button type="button" class="gh hide" id="printone">พิมพ์ใบนี้</button></div>
+          <div style="flex:0 0 auto"><button type="button" class="dg hide" id="voidbtn">ยกเลิกใบรับรอง</button></div>
+          <div style="flex:1"></div>
+        </div>
+        <div class="err" id="eerr"></div><div class="okmsg" id="eok"></div>
+      </form>
+    </div>
+  </section>
+
+  <section id="t-import" class="hide">
+    <div class="card">
+      <h2>นำเข้าจากไฟล์ Excel / CSV</h2>
+      <p class="hint">รองรับ .xlsx และ .csv — ระบบจะออกเลข HN และรหัส QR ให้อัตโนมัติทุกแถว ผลตรวจที่ไม่ได้ระบุจะถือว่า “ปกติ”</p>
+      <div class="tools" style="margin-top:12px">
+        <button class="gh sm" id="tpl">ดาวน์โหลดไฟล์ตัวอย่าง</button>
+        <input type="file" id="file" accept=".csv,.xlsx,.xls" style="max-width:320px">
+      </div>
+      <div id="preview"></div>
+      <div class="err" id="ierr"></div><div class="okmsg" id="iok"></div>
+    </div>
+  </section>
+
+  <section id="t-audit" class="hide">
+    <div class="card">
+      <h2>ประวัติการแก้ไข</h2>
+      <div style="overflow-x:auto">
+      <table class="list"><thead><tr><th>เวลา</th><th>HN</th><th>การกระทำ</th><th>รายละเอียดที่เปลี่ยน</th></tr></thead>
+      <tbody id="ab"><tr><td colspan="4" style="color:var(--mu);padding:22px">กำลังโหลด…</td></tr></tbody></table>
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<div id="printarea"></div>
+
+<script src="/config.js"></script>
+<script src="/cert.js"></script>
+<script>document.head.insertAdjacentHTML("beforeend","<style>"+CERT_CSS+"</style>");</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+var TOK = null, ROWS = [], EDIT = null;
+var $ = function(id){ return document.getElementById(id); };
+var DIS = ['วัณโรค','โรคเรื้อน','โรคเท้าช้าง','โรคซิฟิลิส'];
+
+/* ---------- api ---------- */
+function api(path, opts){
+  opts = opts || {};
+  var h = { 'apikey': CFG.key, 'Content-Type': 'application/json' };
+  if(TOK) h['Authorization'] = 'Bearer ' + TOK;
+  if(opts.prefer) h['Prefer'] = opts.prefer;
+  return fetch(CFG.url + path, { method: opts.method || 'GET', headers: h, body: opts.body })
+    .then(function(r){
+      if(r.status === 401){ logout(); throw new Error('หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่'); }
+      return r.text().then(function(t){
+        var j = t ? JSON.parse(t) : null;
+        if(!r.ok) throw new Error((j && (j.message || j.error_description || j.msg)) || ('เกิดข้อผิดพลาด ('+r.status+')'));
+        return j;
+      });
+    });
+}
+
+/* ---------- auth ---------- */
+function saveSession(j){
+  TOK = j.access_token;
+  try{ localStorage.setItem('wm_sess', JSON.stringify({t:j.access_token, r:j.refresh_token, e:j.user&&j.user.email})); }catch(e){}
+  $('whoami').textContent = (j.user && j.user.email) || '';
+  $('login').classList.add('hide'); $('shell').classList.remove('hide');
+  loadList(); loadAudit();
+}
+function logout(){
+  TOK = null; try{ localStorage.removeItem('wm_sess'); }catch(e){}
+  $('shell').classList.add('hide'); $('login').classList.remove('hide');
+}
+$('lf').addEventListener('submit', function(e){
+  e.preventDefault(); $('lerr').textContent = '';
+  fetch(CFG.url + '/auth/v1/token?grant_type=password', {
+    method:'POST', headers:{'apikey':CFG.key,'Content-Type':'application/json'},
+    body: JSON.stringify({ email: $('le').value.trim(), password: $('lp').value })
+  }).then(function(r){ return r.json(); })
+    .then(function(j){ if(j.access_token) saveSession(j); else $('lerr').textContent = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'; })
+    .catch(function(){ $('lerr').textContent = 'เชื่อมต่อระบบไม่ได้'; });
+});
+$('logout').addEventListener('click', function(e){ e.preventDefault(); logout(); });
+
+(function restore(){
+  var s; try{ s = JSON.parse(localStorage.getItem('wm_sess')||'null'); }catch(e){}
+  if(!s || !s.r) return;
+  fetch(CFG.url + '/auth/v1/token?grant_type=refresh_token', {
+    method:'POST', headers:{'apikey':CFG.key,'Content-Type':'application/json'},
+    body: JSON.stringify({ refresh_token: s.r })
+  }).then(function(r){ return r.json(); })
+    .then(function(j){ if(j.access_token) saveSession(j); })
+    .catch(function(){});
+})();
+
+/* ---------- tabs ---------- */
+Array.prototype.forEach.call(document.querySelectorAll('nav button'), function(b){
+  b.addEventListener('click', function(){
+    Array.prototype.forEach.call(document.querySelectorAll('nav button'), function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    ['list','edit','import','audit'].forEach(function(t){ $('t-'+t).classList.toggle('hide', t !== b.dataset.t); });
+    if(b.dataset.t === 'edit' && !EDIT) resetForm();
+  });
+});
+function goTab(t){ document.querySelector('nav button[data-t="'+t+'"]').click(); }
+
+/* ---------- list ---------- */
+function certUrl(c){ return location.origin + '/?id=' + c.hn + (c.token ? '&k=' + c.token : ''); }
+function stateOf(c){
+  if(c.status === 'void') return ['void','ยกเลิกแล้ว','p-bad'];
+  var n = daysLeft(c);
+  if(n < 0) return ['expired','หมดอายุ','p-bad'];
+  if(n <= 14) return ['soon','เหลือ '+n+' วัน','p-wn'];
+  return ['valid','ใช้ได้','p-ok'];
+}
+function loadList(){
+  api('/rest/v1/certificates?select=*&order=exam_date.desc,hn.desc&limit=1000')
+    .then(function(rows){ ROWS = rows || []; drawList(); drawStats(); })
+    .catch(function(e){ $('tb').innerHTML = '<tr><td colspan="9" style="color:var(--bad);padding:22px">'+esc(e.message)+'</td></tr>'; });
+}
+function drawStats(){
+  var a=ROWS.length, ok=0, soon=0, bad=0;
+  ROWS.forEach(function(c){ var s=stateOf(c)[0]; if(s==='valid') ok++; else if(s==='soon') soon++; else bad++; });
+  $('s-all').textContent=a; $('s-ok').textContent=ok; $('s-soon').textContent=soon; $('s-exp').textContent=bad;
+}
+function filtered(){
+  var q = $('q').value.trim().toLowerCase(), f = $('fstat').value;
+  return ROWS.filter(function(c){
+    if(f && stateOf(c)[0] !== f) return false;
+    if(!q) return true;
+    return (c.patient_name||'').toLowerCase().indexOf(q)>=0
+        || (c.doc_no||'').toLowerCase().indexOf(q)>=0
+        || (c.hn||'').indexOf(q)>=0;
+  });
+}
+function drawList(){
+  var rs = filtered();
+  if(!rs.length){ $('tb').innerHTML = '<tr><td colspan="9" style="color:var(--mu);padding:22px">ไม่พบข้อมูล</td></tr>'; return; }
+  $('tb').innerHTML = rs.map(function(c){
+    var s = stateOf(c);
+    return '<tr>'
+      + '<td><input type="checkbox" class="sel" data-hn="'+esc(c.hn)+'" style="width:auto"></td>'
+      + '<td class="mono">'+esc(c.hn)+'</td>'
+      + '<td>'+esc(c.patient_name)+(c.form_type==='five_disease'?' <span class="pill" style="background:#eef3fb;color:#12428f">5 โรค</span>':'')+'</td>'
+      + '<td class="mono">'+esc(c.doc_no)+'</td>'
+      + '<td>'+esc(c.nationality)+'</td>'
+      + '<td class="mono">'+thDate(c.exam_date)+'</td>'
+      + '<td class="mono">'+thDate(addDays(c.exam_date, c.valid_days||90))+'</td>'
+      + '<td><span class="pill '+s[2]+'">'+s[1]+'</span></td>'
+      + '<td style="white-space:nowrap">'
+        + '<button class="gh sm act-e" data-hn="'+esc(c.hn)+'">แก้ไข</button> '
+        + '<button class="gh sm act-p" data-hn="'+esc(c.hn)+'">พิมพ์</button> '
+        + '<a class="sm" href="'+esc(certUrl(c))+'" target="_blank" style="font-size:12.5px">ดูหน้าลูกค้า</a>'
+      + '</td></tr>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('.act-e'), function(b){
+    b.addEventListener('click', function(){ editCert(b.dataset.hn); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.act-p'), function(b){
+    b.addEventListener('click', function(){ doPrint([byHn(b.dataset.hn)]); });
+  });
+}
+function byHn(hn){ for(var i=0;i<ROWS.length;i++) if(ROWS[i].hn===hn) return ROWS[i]; return null; }
+$('q').addEventListener('input', drawList);
+$('fstat').addEventListener('change', drawList);
+$('reload').addEventListener('click', loadList);
+$('selall').addEventListener('click', function(){
+  var b = document.querySelectorAll('.sel'), on = !(b[0] && b[0].checked);
+  Array.prototype.forEach.call(b, function(x){ x.checked = on; });
+});
+$('printsel').addEventListener('click', function(){
+  var hns = Array.prototype.slice.call(document.querySelectorAll('.sel:checked')).map(function(x){ return x.dataset.hn; });
+  if(!hns.length) return alert('กรุณาเลือกใบรับรองที่ต้องการพิมพ์ก่อน');
+  doPrint(hns.map(byHn));
+});
+
+/* ---------- print ---------- */
+function doPrint(list){
+  var pa = $('printarea'); pa.innerHTML = '';
+  list.filter(Boolean).forEach(function(c, i){
+    var d = document.createElement('div');
+    d.innerHTML = renderCert(c, { qrId: 'qr'+i });
+    pa.appendChild(d);
+  });
+  list.filter(Boolean).forEach(function(c, i){
+    var el = document.getElementById('qr'+i);
+    if(el && window.QRCode) new QRCode(el, { text: certUrl(c), width: 192, height: 192, correctLevel: QRCode.CorrectLevel.M });
+  });
+  setTimeout(function(){ window.print(); }, 350);
+}
+
+/* ---------- form ---------- */
+(function buildForm(){
+  $('tests').innerHTML = TESTS.map(function(t){
+    var opts = [['normal',t[2]],['abnormal',t[3]]];
+    if(t[4]) opts.push(['severe',t[4]]);
+    if(t[0]==='pregnancy'){ opts = [['no','ไม่ตั้งครรภ์'],['yes','ตั้งครรภ์']]; }
+    return '<div><label>'+esc(t[1].replace('ผลการตรวจ',''))+'</label><select id="r-'+t[0]+'">'
+      + opts.map(function(o){ return '<option value="'+o[0]+'">'+esc(o[1])+'</option>'; }).join('') + '</select></div>';
+  }).join('');
+  $('disbox').innerHTML = DIS.map(function(d){
+    return '<label><input type="checkbox" class="dis" value="'+esc(d)+'"> '+esc(d)+'</label>';
+  }).join('');
+})();
+
+var XF = ['book_no','national_id','contact_addr','bp','pulse','exam_place','h_chronic','h_chronic_detail',
+  'h_accident','h_accident_detail','h_hospital','h_hospital_detail','h_other','general','general_detail','doctor_opinion'];
+function applyFormType(){
+  var five = $('f-form_type').value === 'five_disease';
+  Array.prototype.forEach.call(document.querySelectorAll('.only-alien'), function(x){ x.classList.toggle('hide', five); });
+  Array.prototype.forEach.call(document.querySelectorAll('.only-five'), function(x){ x.classList.toggle('hide', !five); });
+}
+var FIELDS = ['patient_name','doc_no','dob','age','birth_city','country','nationality','occupation',
+  'employer_name','employer_addr','exam_date','valid_days','height','weight','skin_color',
+  'general_condition','doctor_name','doctor_license','other_results'];
+
+function resetForm(){
+  EDIT = null; $('eh').textContent = 'เพิ่มใบรับรองแพทย์';
+  $('ef').reset(); $('f-id').value = '';
+  $('f-exam_date').value = today();
+  $('f-occupation').value='กรรมกร'; $('f-skin_color').value='ดำแดง'; $('f-general_condition').value='ปกติ';
+  $('f-valid_days').value=90; $('f-doctor_name').value='นายแพทย์มานิตย์ จารุวรรณ'; $('f-doctor_license').value='ว.10291';
+  $('f-form_type').value='alien_worker'; $('x-exam_place').value='โรงพยาบาลดับเบิ้ลยู เมดิคอล'; applyFormType();
+  $('printone').classList.add('hide'); $('voidbtn').classList.add('hide');
+  $('eerr').textContent=''; $('eok').textContent='';
+}
+$('cancel').addEventListener('click', resetForm);
+$('f-form_type').addEventListener('change', function(){
+  applyFormType();
+  $('f-valid_days').value = ($('f-form_type').value==='five_disease') ? 30 : 90;
+});
+
+function editCert(hn){
+  var c = byHn(hn); if(!c) return;
+  EDIT = c; goTab('edit');
+  $('eh').textContent = 'แก้ไขใบรับรองแพทย์ — HN ' + c.hn;
+  $('f-id').value = c.id;
+  $('f-form_type').value = c.form_type || 'alien_worker'; applyFormType();
+  var X = c.extra || {};
+  XF.forEach(function(f){ var el=$('x-'+f); if(el) el.value = (X[f]===null||X[f]===undefined)?'':X[f]; });
+  FIELDS.forEach(function(f){ var el=$('f-'+f); if(el) el.value = (c[f]===null||c[f]===undefined)?'':c[f]; });
+  if(c.dob) $('f-dob').value = String(c.dob).slice(0,10);
+  $('f-exam_date').value = String(c.exam_date).slice(0,10);
+  TESTS.forEach(function(t){ var el=$('r-'+t[0]); if(el) el.value = (c.results&&c.results[t[0]]) || (t[0]==='pregnancy'?'no':'normal'); });
+  document.querySelector('input[name=sum][value="'+(c.summary||'healthy')+'"]').checked = true;
+  Array.prototype.forEach.call(document.querySelectorAll('.dis'), function(x){
+    x.checked = (c.summary_diseases||[]).indexOf(x.value) >= 0;
+  });
+  $('printone').classList.remove('hide');
+  $('voidbtn').classList.remove('hide');
+  $('voidbtn').textContent = c.status === 'void' ? 'นำกลับมาใช้งาน' : 'ยกเลิกใบรับรอง';
+  $('eerr').textContent=''; $('eok').textContent='';
+}
+
+function collect(){
+  var o = {};
+  FIELDS.forEach(function(f){
+    var el = $('f-'+f); if(!el) return;
+    var v = el.value.trim();
+    o[f] = v === '' ? null : v;
+  });
+  ['age','valid_days','height','weight'].forEach(function(k){ if(o[k]!==null) o[k]=Number(o[k]); });
+  if(o.valid_days===null) o.valid_days = 90;
+  var res = {}; TESTS.forEach(function(t){ res[t[0]] = $('r-'+t[0]).value; });
+  o.results = res;
+  o.summary = document.querySelector('input[name=sum]:checked').value;
+  o.summary_diseases = Array.prototype.slice.call(document.querySelectorAll('.dis:checked')).map(function(x){ return x.value; });
+  o.form_type = $('f-form_type').value;
+  var X = {}; XF.forEach(function(f){ var el=$('x-'+f); if(el && el.value.trim()!=='') X[f]=el.value.trim(); });
+  o.extra = X;
+  return o;
+}
+
+$('ef').addEventListener('submit', function(e){
+  e.preventDefault(); $('eerr').textContent=''; $('eok').textContent='';
+  var body = collect(), id = $('f-id').value;
+  var p = id
+    ? api('/rest/v1/certificates?id=eq.'+id, {method:'PATCH', body: JSON.stringify(body), prefer:'return=representation'})
+    : api('/rest/v1/certificates', {method:'POST', body: JSON.stringify(body), prefer:'return=representation'});
+  p.then(function(r){
+    var c = r && r[0];
+    $('eok').textContent = id ? 'บันทึกการแก้ไขแล้ว' : 'สร้างใบรับรองแล้ว — HN ' + (c && c.hn);
+    loadList(); loadAudit();
+    if(!id && c){ EDIT = c; $('f-id').value = c.id; $('eh').textContent='แก้ไขใบรับรองแพทย์ — HN '+c.hn;
+      $('printone').classList.remove('hide'); $('voidbtn').classList.remove('hide'); }
+  }).catch(function(err){ $('eerr').textContent = err.message; });
+});
+
+$('printone').addEventListener('click', function(){
+  var c = byHn(($('eh').textContent.match(/(\d{6,})/)||[])[1]);
+  if(c) doPrint([c]); else alert('กรุณาบันทึกก่อนพิมพ์');
+});
+
+$('voidbtn').addEventListener('click', function(){
+  var id = $('f-id').value; if(!id) return;
+  var c = ROWS.filter(function(x){ return x.id===id; })[0];
+  var to = (c && c.status === 'void') ? 'active' : 'void';
+  if(to === 'void' && !confirm('ยืนยันยกเลิกใบรับรองนี้? หน้าตรวจสอบของลูกค้าจะแสดงว่า “ถูกยกเลิก”')) return;
+  api('/rest/v1/certificates?id=eq.'+id, {method:'PATCH', body: JSON.stringify({status:to}), prefer:'return=representation'})
+    .then(function(){ $('eok').textContent = to==='void' ? 'ยกเลิกใบรับรองแล้ว' : 'นำกลับมาใช้งานแล้ว';
+      loadList(); loadAudit(); $('voidbtn').textContent = to==='void' ? 'นำกลับมาใช้งาน' : 'ยกเลิกใบรับรอง'; })
+    .catch(function(err){ $('eerr').textContent = err.message; });
+});
+
+/* ---------- import ---------- */
+var COLS = ['patient_name','doc_no','dob','age','birth_city','country','nationality','occupation',
+  'employer_name','employer_addr','exam_date','height','weight','skin_color',
+  'tb','leprosy','filaria','syphilis','drugs','alcohol','pregnancy','summary'];
+
+$('tpl').addEventListener('click', function(){
+  var head = COLS.join(',');
+  var ex = ['Miss. SOMSRI DEE','00000P1234567','1995-03-21','31','ลาว','ลาว','ลาว','กรรมกร',
+    'นายสิทธิชัย พาใหม','641 ซอยพระรามที่ 2 ซอย 42 แขวงบางมด เขตจอมทอง กรุงเทพมหานคร',
+    today(),'160','54','ดำแดง','normal','normal','normal','normal','normal','normal','no','healthy'];
+  var csv = '﻿' + head + '\n' + ex.map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',') + '\n';
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  a.download = 'wmedical-import-template.csv'; a.click();
+});
+
+function normDate(v){
+  if(!v) return null;
+  if(v instanceof Date) return v.toISOString().slice(0,10);
+  v = String(v).trim();
+  var m = v.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);
+  if(m) return m[3]+'-'+m[2]+'-'+m[1];
+  m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[0];
+  return null;
+}
+$('file').addEventListener('change', function(e){
+  var f = e.target.files[0]; if(!f) return;
+  $('ierr').textContent=''; $('iok').textContent='';
+  var fr = new FileReader();
+  fr.onload = function(){
+    try{
+      var wb = XLSX.read(fr.result, {type:'array', cellDates:true});
+      var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:''});
+      if(!rows.length) throw new Error('ไม่พบข้อมูลในไฟล์');
+      var recs = rows.map(function(r){
+        var o = { results:{} };
+        COLS.forEach(function(k){
+          var v = r[k]; if(v === undefined || v === '') return;
+          if(['tb','leprosy','filaria','syphilis','drugs','alcohol','pregnancy'].indexOf(k) >= 0) o.results[k] = String(v).trim();
+          else if(k === 'summary') o.summary = String(v).trim();
+          else if(k === 'dob' || k === 'exam_date') o[k] = normDate(v);
+          else if(['age','height','weight'].indexOf(k) >= 0) o[k] = Number(v);
+          else o[k] = String(v).trim();
+        });
+        if(!o.exam_date) o.exam_date = today();
+        ['tb','leprosy','filaria','syphilis','drugs','alcohol'].forEach(function(k){ if(!o.results[k]) o.results[k]='normal'; });
+        if(!o.results.pregnancy) o.results.pregnancy = 'no';
+        if(!o.summary) o.summary = 'healthy';
+        return o;
+      }).filter(function(o){ return o.patient_name; });
+      if(!recs.length) throw new Error('ไม่พบคอลัมน์ patient_name หรือไม่มีแถวที่มีชื่อ');
+      $('preview').innerHTML = '<p class="hint" style="margin:12px 0 8px">พบ <b>'+recs.length+'</b> รายการพร้อมนำเข้า</p>'
+        + '<div style="overflow-x:auto;max-height:260px"><table class="list"><thead><tr><th>ชื่อ</th><th>Passport</th><th>สัญชาติ</th><th>วันที่ตรวจ</th></tr></thead><tbody>'
+        + recs.slice(0,50).map(function(o){ return '<tr><td>'+esc(o.patient_name)+'</td><td class="mono">'+esc(o.doc_no)+'</td><td>'+esc(o.nationality)+'</td><td class="mono">'+esc(o.exam_date)+'</td></tr>'; }).join('')
+        + '</tbody></table></div><div style="margin-top:12px"><button id="doimp">ยืนยันนำเข้า '+recs.length+' รายการ</button></div>';
+      $('doimp').addEventListener('click', function(){
+        $('doimp').disabled = true; $('doimp').textContent = 'กำลังนำเข้า…';
+        api('/rest/v1/certificates', {method:'POST', body: JSON.stringify(recs), prefer:'return=representation'})
+          .then(function(r){
+            $('iok').textContent = 'นำเข้าสำเร็จ '+(r?r.length:0)+' รายการ';
+            $('preview').innerHTML = ''; $('file').value = ''; loadList(); loadAudit();
+          })
+          .catch(function(err){ $('ierr').textContent = err.message; $('doimp').disabled=false; $('doimp').textContent='ลองอีกครั้ง'; });
+      });
+    }catch(err){ $('ierr').textContent = err.message; }
+  };
+  fr.readAsArrayBuffer(f);
+});
+
+/* ---------- audit ---------- */
+var ACT = { insert:'สร้างใหม่', update:'แก้ไข', 'delete':'ลบ' };
+function diffText(a, b){
+  if(!a || !b) return '—';
+  var out = [];
+  Object.keys(b).forEach(function(k){
+    if(['updated_at','updated_by'].indexOf(k) >= 0) return;
+    var x = JSON.stringify(a[k]), y = JSON.stringify(b[k]);
+    if(x !== y) out.push(k+': '+(x||'—')+' → '+(y||'—'));
+  });
+  return out.length ? esc(out.join(' · ')) : '—';
+}
+function loadAudit(){
+  api('/rest/v1/cert_audit?select=*&order=changed_at.desc&limit=200')
+    .then(function(rows){
+      if(!rows || !rows.length){ $('ab').innerHTML='<tr><td colspan="4" style="color:var(--mu);padding:22px">ยังไม่มีประวัติ</td></tr>'; return; }
+      $('ab').innerHTML = rows.map(function(r){
+        return '<tr><td class="mono">'+new Date(r.changed_at).toLocaleString('th-TH')+'</td>'
+          + '<td class="mono">'+esc(r.hn)+'</td><td>'+(ACT[r.action]||r.action)+'</td>'
+          + '<td style="font-size:12px;color:var(--mu)">'+(r.action==='update'?diffText(r.old_data,r.new_data):'—')+'</td></tr>';
+      }).join('');
+    }).catch(function(){});
+}
+</script>
+</body>
+</html>

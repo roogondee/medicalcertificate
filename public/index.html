@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=880">
+<meta name="robots" content="noindex,nofollow">
+<title>ใบรับรองแพทย์ | W Medical Hospital</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padding:10px 0 40px}
+.bar{width:860px;margin:0 auto 10px;padding:11px 16px;border-radius:11px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;color:#fff}
+.bar .ic{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;flex:0 0 24px;font-size:14px}
+.bar small{display:block;font-weight:400;opacity:.9;font-size:12px}
+.ok{background:#0f7a4d}.wn{background:#8a5a00}.bad{background:#a11d1d}
+.sheet{box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.msg{width:860px;margin:0 auto;background:#fff;border-radius:12px;padding:46px 24px;text-align:center}
+.msg h2{color:#a11d1d;font-size:18px;margin-bottom:8px}
+.msg p{font-size:14px;color:#555}
+.foot{width:860px;margin:12px auto 0;text-align:center;color:#fff;font-size:12px;line-height:1.7;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.foot a{color:#fff}
+</style>
+</head>
+<body>
+<div id="app"><div class="msg" style="color:#555"><p>กำลังตรวจสอบ…</p></div></div>
+<p class="foot">ข้อมูลนี้เป็นข้อมูลส่วนบุคคลด้านสุขภาพ คุ้มครองตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562<br>
+สอบถามเพิ่มเติม โทร. <a href="tel:034110988">034-110-988</a> · <a href="tel:0819023540">081-902-3540</a></p>
+<script src="/config.js"></script>
+<script src="/cert.js"></script>
+<script>document.head.insertAdjacentHTML("beforeend","<style>"+CERT_CSS+"</style>");</script>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  var hn = q.get('id') || (location.pathname.match(/(\d{6,})/)||[])[1] || '';
+  var tk = q.get('k') || '';
+  var app = document.getElementById('app');
+
+  function fail(title, detail){
+    app.innerHTML = '<div class="msg"><h2>'+title+'</h2><p>'+detail+'</p></div>';
+  }
+  if(!hn){ return fail('ไม่พบเลขที่ใบรับรอง','กรุณาสแกน QR code บนใบรับรองแพทย์อีกครั้ง'); }
+
+  fetch(CFG.url + '/rest/v1/rpc/verify_certificate', {
+    method: 'POST',
+    headers: { 'apikey': CFG.key, 'Authorization': 'Bearer ' + CFG.key, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_hn: hn, p_token: tk })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(c){
+    if(!c){ return fail('ไม่พบใบรับรองแพทย์ฉบับนี้',
+      'เลขที่ <b>'+esc(hn)+'</b> ไม่มีอยู่ในระบบ หรือลิงก์ไม่ถูกต้อง<br>กรุณาตรวจสอบอีกครั้ง หรือติดต่อโรงพยาบาลเพื่อยืนยัน'); }
+    var s = certStatus(c);
+    app.innerHTML =
+      '<div class="bar '+s.cls+'"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
+      + renderCert(c, {});
+  })
+  .catch(function(){ fail('เชื่อมต่อระบบไม่ได้','กรุณาลองใหม่อีกครั้ง หรือติดต่อโรงพยาบาล โทร. 034-110-988'); });
+})();
+</script>
+</body>
+</html>
