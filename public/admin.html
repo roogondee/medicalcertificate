@@ -72,8 +72,15 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
   body>*{display:none!important}
   #printarea{display:block!important}
   #printarea .sheet{box-shadow:none;page-break-after:always;width:100%;padding:14mm 12mm}
-  @page{size:A4;margin:0}
+  #printarea .stickerpage{page-break-after:always}
+  @page{size:A4;margin:8mm}
 }
+.stickerpage{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
+.stk{border:1px dashed #999;border-radius:2mm;padding:3mm;display:flex;gap:3mm;align-items:center;height:32mm;box-sizing:border-box}
+.stk .qr{flex:0 0 26mm;width:26mm;height:26mm}
+.stk .qr img,.stk .qr canvas{width:26mm!important;height:26mm!important;display:block}
+.stk .info{font-size:9px;line-height:1.5;overflow:hidden}
+.stk .info b{display:block;font-size:10px}
 </style>
 </head>
 <body>
@@ -101,6 +108,7 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
   <button data-t="list" class="on">รายการใบรับรอง</button>
   <button data-t="edit">เพิ่มใบรับรอง</button>
   <button data-t="import">นำเข้า Excel/CSV</button>
+  <button data-t="report">รายงาน</button>
   <button data-t="audit">ประวัติการแก้ไข</button>
 </div></nav>
 
@@ -120,12 +128,14 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
         <button class="gh sm" id="reload">รีเฟรช</button>
         <div style="flex:1"></div>
         <button class="gh sm" id="selall">เลือกทั้งหมด</button>
+        <button class="gh sm" id="exportxlsx">Export Excel</button>
+        <button class="gh sm" id="printstickers">พิมพ์สติ๊กเกอร์ QR</button>
         <button class="sm" id="printsel">พิมพ์ที่เลือก</button>
       </div>
       <div style="overflow-x:auto">
       <table class="list">
-        <thead><tr><th style="width:28px"></th><th>HN</th><th>ชื่อ – สกุล</th><th>Passport</th><th>สัญชาติ</th><th>วันที่ตรวจ</th><th>หมดอายุ</th><th>สถานะ</th><th></th></tr></thead>
-        <tbody id="tb"><tr><td colspan="9" style="color:var(--mu);padding:22px">กำลังโหลด…</td></tr></tbody>
+        <thead><tr><th style="width:28px"></th><th>HN</th><th>ชื่อ – สกุล</th><th>Passport</th><th>สัญชาติ</th><th>วันที่ตรวจ</th><th>หมดอายุ</th><th>สถานะ</th><th>ยืนยัน</th><th>ผู้ออกใบ</th><th></th></tr></thead>
+        <tbody id="tb"><tr><td colspan="11" style="color:var(--mu);padding:22px">กำลังโหลด…</td></tr></tbody>
       </table>
       </div>
     </div>
@@ -159,6 +169,14 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
             <div><label>ประเทศ</label><input id="f-country"></div>
             <div><label>สัญชาติ</label><input id="f-nationality"></div>
             <div><label>อาชีพ</label><input id="f-occupation" value="กรรมกร"></div>
+          </div>
+          <div class="row" style="margin-top:8px;align-items:center">
+            <div style="flex:0 0 auto"><label>รูปถ่ายผู้ตรวจ (ไม่บังคับ)</label>
+              <input type="hidden" id="f-photo_path">
+              <input type="file" id="f-photo" accept="image/*">
+            </div>
+            <div style="flex:0 0 auto"><img id="photo-preview" class="hide" style="width:84px;height:84px;object-fit:cover;border-radius:9px;border:1px solid var(--ln)"></div>
+            <div style="flex:0 0 auto" id="photo-status" class="hint"></div>
           </div>
         </fieldset>
         <fieldset class="only-alien"><legend>นายจ้าง / สถานประกอบการ</legend>
@@ -261,9 +279,11 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
           <div style="flex:0 0 auto"><button type="submit" id="save">บันทึก</button></div>
           <div style="flex:0 0 auto"><button type="button" class="gh" id="cancel">ล้างฟอร์ม</button></div>
           <div style="flex:0 0 auto"><button type="button" class="gh hide" id="printone">พิมพ์ใบนี้</button></div>
+          <div style="flex:0 0 auto"><button type="button" class="gh hide" id="confirmbtn">ยืนยันข้อมูลถูกต้อง</button></div>
           <div style="flex:0 0 auto"><button type="button" class="dg hide" id="voidbtn">ยกเลิกใบรับรอง</button></div>
           <div style="flex:1"></div>
         </div>
+        <div class="hint" id="confirminfo"></div>
         <div class="err" id="eerr"></div><div class="okmsg" id="eok"></div>
       </form>
     </div>
@@ -279,6 +299,22 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
       </div>
       <div id="preview"></div>
       <div class="err" id="ierr"></div><div class="okmsg" id="iok"></div>
+    </div>
+  </section>
+
+  <section id="t-report" class="hide">
+    <div class="stat" id="rep-stat"></div>
+    <div class="card">
+      <h2>ยอดออกใบต่อเดือน</h2>
+      <div style="overflow-x:auto"><table class="list"><thead><tr><th>เดือน</th><th>จำนวนใบ</th></tr></thead><tbody id="rep-month"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>แยกตามชนิดฟอร์ม</h2>
+      <div style="overflow-x:auto"><table class="list"><thead><tr><th>แบบฟอร์ม</th><th>จำนวนใบ</th></tr></thead><tbody id="rep-form"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>นายจ้าง/สถานประกอบการยอดสูงสุด</h2>
+      <div style="overflow-x:auto"><table class="list"><thead><tr><th>นายจ้าง</th><th>จำนวนใบ</th></tr></thead><tbody id="rep-employer"></tbody></table></div>
     </div>
   </section>
 
@@ -303,10 +339,12 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-var TOK = null, ROWS = [], EDIT = null;
+var TOK = null, ME = null, ROWS = [], EDIT = null, STAFF = {};
 var $ = function(id){ return document.getElementById(id); };
 var DIS = ['วัณโรค','โรคเรื้อน','โรคเท้าช้าง','โรคซิฟิลิส'];
 var FORM_LABEL = { five_disease:'5 โรค', driving:'ใบขับขี่', sick_leave:'ตรวจรักษา', snor11:'สณ.11', bilingual:'2 ภาษา' };
+var FORM_LABEL_FULL = { alien_worker:'ต่างด้าว/แรงงานต่างด้าว', five_disease:'5 โรค', driving:'ใบขับขี่', sick_leave:'ตรวจรักษา/ลาป่วย', snor11:'สณ.11', bilingual:'2 ภาษา' };
+/* photoUrl() is defined once in cert.js (shared with the public verify page) */
 
 /* ---------- api ---------- */
 function api(path, opts){
@@ -328,13 +366,14 @@ function api(path, opts){
 /* ---------- auth ---------- */
 function saveSession(j){
   TOK = j.access_token;
+  ME = j.user ? { id: j.user.id, email: j.user.email } : null;
   try{ localStorage.setItem('wm_sess', JSON.stringify({t:j.access_token, r:j.refresh_token, e:j.user&&j.user.email})); }catch(e){}
   $('whoami').textContent = (j.user && j.user.email) || '';
   $('login').classList.add('hide'); $('shell').classList.remove('hide');
   loadList(); loadAudit();
 }
 function logout(){
-  TOK = null; try{ localStorage.removeItem('wm_sess'); }catch(e){}
+  TOK = null; ME = null; try{ localStorage.removeItem('wm_sess'); }catch(e){}
   $('shell').classList.add('hide'); $('login').classList.remove('hide');
 }
 $('lf').addEventListener('submit', function(e){
@@ -364,8 +403,9 @@ Array.prototype.forEach.call(document.querySelectorAll('nav button'), function(b
   b.addEventListener('click', function(){
     Array.prototype.forEach.call(document.querySelectorAll('nav button'), function(x){ x.classList.remove('on'); });
     b.classList.add('on');
-    ['list','edit','import','audit'].forEach(function(t){ $('t-'+t).classList.toggle('hide', t !== b.dataset.t); });
+    ['list','edit','import','report','audit'].forEach(function(t){ $('t-'+t).classList.toggle('hide', t !== b.dataset.t); });
     if(b.dataset.t === 'edit' && !EDIT) resetForm();
+    if(b.dataset.t === 'report') drawReport();
   });
 });
 function goTab(t){ document.querySelector('nav button[data-t="'+t+'"]').click(); }
@@ -379,10 +419,23 @@ function stateOf(c){
   if(n <= 14) return ['soon','เหลือ '+n+' วัน','p-wn'];
   return ['valid','ใช้ได้','p-ok'];
 }
+function ensureStaffEmails(ids){
+  var missing = ids.filter(function(id){ return id && !(id in STAFF); });
+  if(!missing.length) return Promise.resolve();
+  missing.forEach(function(id){ STAFF[id] = null; });
+  return api('/rest/v1/rpc/staff_emails', {method:'POST', body: JSON.stringify({p_uids: missing})})
+    .then(function(rows){ (rows||[]).forEach(function(r){ STAFF[r.id] = r.email; }); })
+    .catch(function(){});
+}
 function loadList(){
   api('/rest/v1/certificates?select=*&order=exam_date.desc,hn.desc&limit=1000')
-    .then(function(rows){ ROWS = rows || []; drawList(); drawStats(); })
-    .catch(function(e){ $('tb').innerHTML = '<tr><td colspan="9" style="color:var(--bad);padding:22px">'+esc(e.message)+'</td></tr>'; });
+    .then(function(rows){
+      ROWS = rows || []; drawList(); drawStats();
+      var ids = [];
+      ROWS.forEach(function(c){ if(c.created_by) ids.push(c.created_by); if(c.confirmed_by) ids.push(c.confirmed_by); });
+      ensureStaffEmails(ids).then(function(){ drawList(); });
+    })
+    .catch(function(e){ $('tb').innerHTML = '<tr><td colspan="11" style="color:var(--bad);padding:22px">'+esc(e.message)+'</td></tr>'; });
 }
 function drawStats(){
   var a=ROWS.length, ok=0, soon=0, bad=0;
@@ -401,9 +454,13 @@ function filtered(){
 }
 function drawList(){
   var rs = filtered();
-  if(!rs.length){ $('tb').innerHTML = '<tr><td colspan="9" style="color:var(--mu);padding:22px">ไม่พบข้อมูล</td></tr>'; return; }
+  if(!rs.length){ $('tb').innerHTML = '<tr><td colspan="11" style="color:var(--mu);padding:22px">ไม่พบข้อมูล</td></tr>'; return; }
   $('tb').innerHTML = rs.map(function(c){
     var s = stateOf(c);
+    var confirmPill = c.confirmed_at
+      ? '<span class="pill p-ok" title="ยืนยันโดย '+esc(STAFF[c.confirmed_by]||'—')+'">✓ ยืนยันแล้ว</span>'
+      : '<span class="pill p-wn">รอยืนยัน</span>';
+    var issuedBy = c.created_by ? (STAFF[c.created_by] || '…') : '—';
     return '<tr>'
       + '<td><input type="checkbox" class="sel" data-hn="'+esc(c.hn)+'" style="width:auto"></td>'
       + '<td class="mono">'+esc(c.hn)+'</td>'
@@ -413,6 +470,8 @@ function drawList(){
       + '<td class="mono">'+thDate(c.exam_date)+'</td>'
       + '<td class="mono">'+thDate(addDays(c.exam_date, c.valid_days||90))+'</td>'
       + '<td><span class="pill '+s[2]+'">'+s[1]+'</span></td>'
+      + '<td>'+confirmPill+'</td>'
+      + '<td style="font-size:12px;color:var(--mu)">'+esc(issuedBy)+'</td>'
       + '<td style="white-space:nowrap">'
         + '<button class="gh sm act-e" data-hn="'+esc(c.hn)+'">แก้ไข</button> '
         + '<button class="gh sm act-p" data-hn="'+esc(c.hn)+'">พิมพ์</button> '
@@ -439,6 +498,27 @@ $('printsel').addEventListener('click', function(){
   if(!hns.length) return alert('กรุณาเลือกใบรับรองที่ต้องการพิมพ์ก่อน');
   doPrint(hns.map(byHn));
 });
+$('printstickers').addEventListener('click', function(){
+  var sel = Array.prototype.slice.call(document.querySelectorAll('.sel:checked')).map(function(x){ return x.dataset.hn; });
+  var list = (sel.length ? sel.map(byHn) : filtered()).filter(Boolean);
+  if(!list.length) return alert('ไม่มีรายการให้พิมพ์');
+  doPrintStickers(list);
+});
+$('exportxlsx').addEventListener('click', function(){
+  var rows = filtered().map(function(c){
+    var s = stateOf(c);
+    return {
+      'HN': c.hn, 'ชื่อ-สกุล': c.patient_name, 'Passport/บัตรประชาชน': c.doc_no,
+      'สัญชาติ': c.nationality, 'แบบฟอร์ม': FORM_LABEL_FULL[c.form_type]||c.form_type,
+      'นายจ้าง': c.employer_name||'', 'วันที่ตรวจ': c.exam_date,
+      'วันหมดอายุ': addDays(c.exam_date, c.valid_days||90), 'สถานะ': s[1],
+      'ยืนยันแล้ว': c.confirmed_at ? 'ใช่' : 'ไม่', 'ผู้ออกใบ': STAFF[c.created_by]||''
+    };
+  });
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'certificates');
+  XLSX.writeFile(wb, 'wmedical-certificates-'+today()+'.xlsx');
+});
 
 /* ---------- print ---------- */
 function doPrint(list){
@@ -451,6 +531,26 @@ function doPrint(list){
   list.filter(Boolean).forEach(function(c, i){
     var el = document.getElementById('qr'+i);
     if(el && window.QRCode) new QRCode(el, { text: certUrl(c), width: 192, height: 192, correctLevel: QRCode.CorrectLevel.M });
+  });
+  setTimeout(function(){ window.print(); }, 350);
+}
+function doPrintStickers(list){
+  var pa = $('printarea'); pa.innerHTML = '';
+  var PER_PAGE = 24, qrJobs = [];
+  list.filter(Boolean).forEach(function(c, i){
+    if(i % PER_PAGE === 0){ pa.appendChild(document.createElement('div')).className = 'stickerpage'; }
+    var page = pa.lastChild;
+    var stk = document.createElement('div'); stk.className = 'stk';
+    var qrId = 'stkqr'+i;
+    stk.innerHTML = '<div id="'+qrId+'" class="qr"></div>'
+      + '<div class="info"><b>'+esc(c.patient_name)+'</b>HN '+esc(c.hn)+'<br>หมดอายุ '+thDate(addDays(c.exam_date, c.valid_days||90))
+      + '<br>สแกนตรวจสอบใบรับรอง</div>';
+    page.appendChild(stk);
+    qrJobs.push({ id: qrId, c: c });
+  });
+  qrJobs.forEach(function(job){
+    var el = document.getElementById(job.id);
+    if(el && window.QRCode) new QRCode(el, { text: certUrl(job.c), width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
   });
   setTimeout(function(){ window.print(); }, 350);
 }
@@ -489,7 +589,47 @@ function applyFormType(){
 }
 var FIELDS = ['patient_name','doc_no','dob','age','birth_city','country','nationality','occupation',
   'employer_name','employer_addr','exam_date','valid_days','height','weight','skin_color',
-  'general_condition','doctor_name','doctor_license','other_results'];
+  'general_condition','doctor_name','doctor_license','other_results','photo_path'];
+
+/* ---------- photo upload ---------- */
+function uuid4(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
+    var r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8); return v.toString(16);
+  });
+}
+function setPhotoPreview(path){
+  var img = $('photo-preview');
+  if(path){ img.src = photoUrl(path); img.classList.remove('hide'); }
+  else{ img.src=''; img.classList.add('hide'); }
+}
+$('f-photo').addEventListener('change', function(e){
+  var f = e.target.files[0]; if(!f) return;
+  $('photo-status').textContent = 'กำลังอัปโหลด…';
+  var img = new Image(); var reader = new FileReader();
+  reader.onload = function(){
+    img.onload = function(){
+      var maxW = 480, scale = Math.min(1, maxW / img.width);
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(function(blob){
+        var path = 'cert-photos/' + uuid4() + '.jpg';
+        fetch(CFG.url + '/storage/v1/object/' + path, {
+          method: 'POST',
+          headers: { 'apikey': CFG.key, 'Authorization': 'Bearer ' + TOK, 'Content-Type': 'image/jpeg' },
+          body: blob
+        }).then(function(r){
+          if(!r.ok) throw new Error('อัปโหลดไม่สำเร็จ');
+          $('f-photo_path').value = path; setPhotoPreview(path);
+          $('photo-status').textContent = 'อัปโหลดรูปแล้ว';
+        }).catch(function(err){ $('photo-status').textContent = err.message; });
+      }, 'image/jpeg', 0.82);
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(f);
+});
 
 function resetForm(){
   EDIT = null; $('eh').textContent = 'เพิ่มใบรับรองแพทย์';
@@ -498,7 +638,8 @@ function resetForm(){
   $('f-occupation').value='กรรมกร'; $('f-skin_color').value='ดำแดง'; $('f-general_condition').value='ปกติ';
   $('f-valid_days').value=90; $('f-doctor_name').value='นายแพทย์มานิตย์ จารุวรรณ'; $('f-doctor_license').value='ว.10291';
   $('f-form_type').value='alien_worker'; $('x-exam_place').value='โรงพยาบาลดับเบิ้ลยู เมดิคอล'; applyFormType();
-  $('printone').classList.add('hide'); $('voidbtn').classList.add('hide');
+  $('printone').classList.add('hide'); $('voidbtn').classList.add('hide'); $('confirmbtn').classList.add('hide');
+  $('f-photo_path').value=''; setPhotoPreview(''); $('photo-status').textContent=''; $('confirminfo').textContent='';
   $('eerr').textContent=''; $('eok').textContent='';
 }
 $('cancel').addEventListener('click', resetForm);
@@ -523,9 +664,15 @@ function editCert(hn){
   Array.prototype.forEach.call(document.querySelectorAll('.dis'), function(x){
     x.checked = (c.summary_diseases||[]).indexOf(x.value) >= 0;
   });
+  setPhotoPreview(c.photo_path); $('photo-status').textContent='';
   $('printone').classList.remove('hide');
   $('voidbtn').classList.remove('hide');
   $('voidbtn').textContent = c.status === 'void' ? 'นำกลับมาใช้งาน' : 'ยกเลิกใบรับรอง';
+  $('confirmbtn').classList.remove('hide');
+  $('confirmbtn').textContent = c.confirmed_at ? 'ยกเลิกการยืนยัน' : 'ยืนยันข้อมูลถูกต้อง';
+  $('confirminfo').textContent = c.confirmed_at
+    ? 'ยืนยันโดย ' + (STAFF[c.confirmed_by] || '…') + ' เมื่อ ' + new Date(c.confirmed_at).toLocaleString('th-TH')
+    : 'ยังไม่มีผู้ยืนยันข้อมูลชุดนี้ — หน้าตรวจสอบสาธารณะจะแสดงว่า “ยังไม่ได้รับการยืนยัน”';
   $('eerr').textContent=''; $('eok').textContent='';
 }
 
@@ -576,6 +723,23 @@ $('voidbtn').addEventListener('click', function(){
   api('/rest/v1/certificates?id=eq.'+id, {method:'PATCH', body: JSON.stringify({status:to}), prefer:'return=representation'})
     .then(function(){ $('eok').textContent = to==='void' ? 'ยกเลิกใบรับรองแล้ว' : 'นำกลับมาใช้งานแล้ว';
       loadList(); loadAudit(); $('voidbtn').textContent = to==='void' ? 'นำกลับมาใช้งาน' : 'ยกเลิกใบรับรอง'; })
+    .catch(function(err){ $('eerr').textContent = err.message; });
+});
+
+$('confirmbtn').addEventListener('click', function(){
+  var id = $('f-id').value; if(!id) return;
+  var c = ROWS.filter(function(x){ return x.id===id; })[0];
+  var toConfirm = !(c && c.confirmed_at);
+  var body = toConfirm ? { confirmed_by: ME && ME.id, confirmed_at: new Date().toISOString() } : { confirmed_by: null, confirmed_at: null };
+  api('/rest/v1/certificates?id=eq.'+id, {method:'PATCH', body: JSON.stringify(body), prefer:'return=representation'})
+    .then(function(r){
+      $('eok').textContent = toConfirm ? 'ยืนยันข้อมูลถูกต้องแล้ว' : 'ยกเลิกการยืนยันแล้ว';
+      $('confirmbtn').textContent = toConfirm ? 'ยกเลิกการยืนยัน' : 'ยืนยันข้อมูลถูกต้อง';
+      $('confirminfo').textContent = toConfirm
+        ? 'ยืนยันโดย ' + ((ME && ME.email) || '…') + ' เมื่อ ' + new Date().toLocaleString('th-TH')
+        : 'ยังไม่มีผู้ยืนยันข้อมูลชุดนี้ — หน้าตรวจสอบสาธารณะจะแสดงว่า “ยังไม่ได้รับการยืนยัน”';
+      loadList(); loadAudit();
+    })
     .catch(function(err){ $('eerr').textContent = err.message; });
 });
 
@@ -648,6 +812,38 @@ $('file').addEventListener('change', function(e){
   };
   fr.readAsArrayBuffer(f);
 });
+
+/* ---------- report ---------- */
+function drawReport(){
+  var now = new Date(), thisMonth = now.toISOString().slice(0,7);
+  var thisMonthN = ROWS.filter(function(c){ return String(c.exam_date).slice(0,7) === thisMonth; }).length;
+  var confirmedN = ROWS.filter(function(c){ return c.confirmed_at; }).length;
+  $('rep-stat').innerHTML =
+      '<div><b>'+ROWS.length+'</b><span>ใบรับรองทั้งหมด</span></div>'
+    + '<div><b>'+thisMonthN+'</b><span>ออกในเดือนนี้</span></div>'
+    + '<div><b>'+confirmedN+'</b><span>ยืนยันข้อมูลแล้ว</span></div>'
+    + '<div><b>'+(ROWS.length-confirmedN)+'</b><span>รอยืนยัน</span></div>';
+
+  var byMonth = {};
+  ROWS.forEach(function(c){ var k = String(c.exam_date).slice(0,7); byMonth[k] = (byMonth[k]||0)+1; });
+  var months = Object.keys(byMonth).sort().reverse().slice(0,12);
+  $('rep-month').innerHTML = months.length
+    ? months.map(function(m){ return '<tr><td class="mono">'+esc(m)+'</td><td>'+byMonth[m]+'</td></tr>'; }).join('')
+    : '<tr><td colspan="2" style="color:var(--mu)">ไม่มีข้อมูล</td></tr>';
+
+  var byForm = {};
+  ROWS.forEach(function(c){ var k = c.form_type||'alien_worker'; byForm[k] = (byForm[k]||0)+1; });
+  $('rep-form').innerHTML = Object.keys(byForm).sort(function(a,b){ return byForm[b]-byForm[a]; })
+    .map(function(k){ return '<tr><td>'+esc(FORM_LABEL_FULL[k]||k)+'</td><td>'+byForm[k]+'</td></tr>'; }).join('')
+    || '<tr><td colspan="2" style="color:var(--mu)">ไม่มีข้อมูล</td></tr>';
+
+  var byEmployer = {};
+  ROWS.forEach(function(c){ if(c.employer_name) byEmployer[c.employer_name] = (byEmployer[c.employer_name]||0)+1; });
+  var employers = Object.keys(byEmployer).sort(function(a,b){ return byEmployer[b]-byEmployer[a]; }).slice(0,10);
+  $('rep-employer').innerHTML = employers.length
+    ? employers.map(function(e){ return '<tr><td>'+esc(e)+'</td><td>'+byEmployer[e]+'</td></tr>'; }).join('')
+    : '<tr><td colspan="2" style="color:var(--mu)">ไม่มีข้อมูล</td></tr>';
+}
 
 /* ---------- audit ---------- */
 var ACT = { insert:'สร้างใหม่', update:'แก้ไข', 'delete':'ลบ' };

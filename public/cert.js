@@ -21,6 +21,15 @@ var HOSP = {
 };
 
 function esc(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"]/g,function(x){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[x]}); }
+function photoUrl(path){ return path ? ((typeof CFG!=='undefined'?CFG.url:'') + '/storage/v1/object/public/' + path) : ''; }
+function photoBox(c){ return c.photo_path ? '<img class="cphoto" src="'+esc(photoUrl(c.photo_path))+'" alt="รูปถ่ายผู้ตรวจ">' : ''; }
+function confirmBadge(c){
+  if(c.confirmed_at){
+    var who = c.confirmed_by_email ? ' ('+esc(c.confirmed_by_email)+')' : '';
+    return '<div class="confirmbadge ok">&#10003; ยืนยันข้อมูลโดยเจ้าหน้าที่'+who+' เมื่อ '+thDate(c.confirmed_at)+'</div>';
+  }
+  return '<div class="confirmbadge wait">ข้อมูลชุดนี้ยังไม่ได้รับการยืนยันจากเจ้าหน้าที่ — กรุณาตรวจสอบกับโรงพยาบาลโดยตรงหากมีข้อสงสัย</div>';
+}
 function thDate(iso){ if(!iso) return '—'; var a=String(iso).slice(0,10).split('-').map(Number); return a[2]+' '+TH_M[a[1]-1]+' '+(a[0]+543); }
 function ddmmyyyy(iso){ if(!iso) return ''; var a=String(iso).slice(0,10).split('-'); return a[2]+'-'+a[1]+'-'+a[0]; }
 function addDays(iso,n){ var t=new Date(String(iso).slice(0,10)+'T00:00:00Z'); t.setUTCDate(t.getUTCDate()+n); return t.toISOString().slice(0,10); }
@@ -60,8 +69,8 @@ function renderCert(c, opts){
   var s3 = c.summary==='fail'    ? '&#10003;' : '';
 
   var corner = opts.qrId
-    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'
-    : '<div class="hn">HN '+esc(c.hn)+'</div>';
+    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c)
+    : '<div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c);
 
   return ''
   + '<div class="sheet">'
@@ -96,6 +105,7 @@ function renderCert(c, opts){
   + '</ol></div>'
   + '<div class="sign"><div class="role">แพทย์ผู้ตรวจ</div><div class="line">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div></div>'
   + '<div class="note">( ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||90)+' วัน นับแต่วันที่ตรวจร่างกาย )</div>'
+  + confirmBadge(c)
   + '</div>';
 }
 
@@ -110,6 +120,10 @@ var CERT_CSS = ''
 + '.qrbox{margin:4px auto 2px;width:96px;height:96px}'
 + '.qrbox img,.qrbox canvas{width:96px !important;height:96px !important;display:block}'
 + '.hdr .hn{margin-top:4px;font-size:13px;color:#12428f;font-weight:700}'
++ '.cphoto{width:64px;height:64px;object-fit:cover;border-radius:8px;margin:6px auto 0;display:block;border:1px solid #ccc}'
++ '.confirmbadge{margin-top:12px;padding:6px 10px;border-radius:8px;font-size:11px;text-align:center}'
++ '.confirmbadge.ok{background:#e7f6ee;color:#0f7a4d}'
++ '.confirmbadge.wait{background:#f1f3f6;color:#657288}'
 + '.sheet h1{text-align:center;font-size:17px;font-weight:700;margin:6px 0 2px}'
 + '.subrow{display:flex;align-items:flex-end;justify-content:center;position:relative}'
 + '.sub{text-align:center;font-size:14px;font-weight:600}'
@@ -160,8 +174,8 @@ function renderCertFive(c, opts){
   var x = c.extra || {};
   var drv = c.form_type === 'driving';
   var corner = opts.qrId
-    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'
-    : '<div class="hn">HN '+esc(c.hn)+'</div>';
+    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c)
+    : '<div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c);
   var yn = function(v, detail, label){
     return bx(v!=='yes')+' ไม่มี &nbsp;'+bx(v==='yes')+' มี  (ระบุ) <span class="dot">'+esc(detail||'')+'</span>';
   };
@@ -202,6 +216,7 @@ function renderCertFive(c, opts){
   + '<div class="rem">หมายเหตุ &nbsp;(1) ต้องเป็นแพทย์ซึ่งได้ขึ้นทะเบียนรับใบอนุญาตประกอบวิชาชีพเวชกรรม<br>'
   + '<span class="pad">(2) ให้แสดงว่าเป็นผู้มีร่างกายสมบูรณ์เพียงใด ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||30)+' วัน นับแต่วันที่ตรวจร่างกาย</span><br>'
   + '<span class="pad">(3) ใบรับรองแพทย์ฉบับนี้จะสมบูรณ์เมื่อประทับตราโรงพยาบาล</span></div>'
+  + confirmBadge(c)
   + '</div>';
 }
 function thDay(iso){ if(!iso) return ''; return String(Number(String(iso).slice(8,10))); }
@@ -210,8 +225,8 @@ function thYear(iso){ if(!iso) return ''; return String(Number(String(iso).slice
 
 function cornerOf(c, opts){
   return opts.qrId
-    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'
-    : '<div class="hn">HN '+esc(c.hn)+'</div>';
+    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c)
+    : '<div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c);
 }
 function hospHeader(corner){
   return '<div class="hdr"><div class="lg"><img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล"></div>'
@@ -232,11 +247,12 @@ function renderCertSick(c, opts){
   + '<p class="l">ใบอนุญาตประกอบวิชาชีพเวชกรรมเลขที่ <span class="dot w110">'+esc(c.doctor_license)+'</span> สถานพยาบาลชื่อ <span class="dot fill">'+esc(HOSP.nameTh)+'</span></p>'
   + '<p class="l">ได้ทำการตรวจรักษา นาย/นาง/นางสาว <span class="dot fill">'+esc(c.patient_name)+'</span></p>'
   + '<p class="l">เมื่อวันที่ <span class="dot w180">'+thDate(c.exam_date)+'</span></p>'
-  + '<p class="l">มีอาการ <span class="dot fill">'+esc(x.symptoms||'')+'</span></p>'
-  + '<p class="l">การวินิจฉัยโรค <span class="dot fill">'+esc(x.diagnosis||'')+'</span></p>'
+  + '<p class="l">มีอาการ <span class="dot fill">'+(x.symptoms==='__redacted__'?'<i>— แสดงเฉพาะบนใบรับรองฉบับจริง —</i>':esc(x.symptoms||''))+'</span></p>'
+  + '<p class="l">การวินิจฉัยโรค <span class="dot fill">'+(x.diagnosis==='__redacted__'?'<i>— แสดงเฉพาะบนใบรับรองฉบับจริง —</i>':esc(x.diagnosis||''))+'</span></p>'
   + '<p class="l">ความเห็น <span class="dot fill">'+esc(x.opinion||'')+'</span></p>'
   + '<p class="l"><span class="dot fill"></span></p>'
   + '<div class="fsign"><div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ผู้ตรวจรักษา</div></div>'
+  + confirmBadge(c)
   + '</div>';
 }
 
@@ -267,6 +283,7 @@ function renderCertSnor11(c, opts){
   + '<div class="rem">หมายเหตุ &nbsp;(๑) ให้ประทับตราสถานพยาบาลพร้อมทั้งระบุที่อยู่<br>'
   + '<span class="pad">(๒) ต้องเป็นแพทย์ซึ่งได้ขึ้นทะเบียนรับใบอนุญาตประกอบวิชาชีพเวชกรรม</span><br>'
   + '<span class="pad">(๓) ให้แสดงว่าเป็นผู้ที่มีร่างกายสมบูรณ์เพียงใด ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||30)+' วัน นับแต่วันที่ตรวจร่างกาย</span></div>'
+  + confirmBadge(c)
   + '</div>';
 }
 
@@ -296,6 +313,7 @@ function renderCertBilingual(c, opts){
   + '<ul class="bilist">'+BI_DISEASES.map(function(d){ return '<li>'+esc(d[0])+'<span class="en">'+esc(d[1])+'</span></li>'; }).join('')+'</ul>'
   + '<p class="l j"><span class="dot fill">'+esc(c.patient_name)+'</span> เป็นผู้มีร่างกายแข็งแรงสมบูรณ์ ไม่เป็นผู้มีจิตฟั่นเฟือนหรือไม่สมประกอบ หรือไม่เป็นผู้ที่มีร่างกายทุพพลภาพ หรือเป็นโรคดังกล่าวข้างต้น<span class="en">(name) is in good physical and mental health, free from any defect.</span></p>'
   + '<div class="fsign"><div class="line"></div><div class="nm">('+esc(c.doctor_name)+')</div><div>นายแพทย์ผู้ตรวจ / Signature M.D.</div></div>'
+  + confirmBadge(c)
   + '</div>';
 }
 
