@@ -103,7 +103,7 @@ function renderCert(c, opts){
   + '<li class="ind">3.1 ร่างกายทุพพลภาพจึงไม่สามารถประกอบการหาเลี้ยงชีพได้ / จิตฟั่นเฟือน ไม่สมประกอบ</li>'
   + '<li class="ind">3.2 เป็นโรคไม่อนุญาตให้ทำงาน และไม่ให้การประกันสุขภาพ (ตามประกาศกระทรวงสาธารณสุขฯ)</li>'
   + '</ol></div>'
-  + '<div class="sign"><div class="role">แพทย์ผู้ตรวจ</div><div class="line">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div></div>'
+  + '<div class="sign"><div class="role">แพทย์ผู้ตรวจ</div><img class="sig" src="/sign.png" alt=""><div class="line">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div></div>'
   + '<div class="note">( ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||90)+' วัน นับแต่วันที่ตรวจร่างกาย )</div>'
   + confirmBadge(c)
   + '</div>';
@@ -142,7 +142,8 @@ var CERT_CSS = ''
 + '.sum .n{display:inline-block;width:26px}.sum .ind{margin-left:46px}'
 + '.dis{display:flex;gap:4px;margin:4px 0 4px 46px;flex-wrap:wrap}.dis span{white-space:nowrap}'
 + '.sign{margin-top:22px;text-align:center}.sign .role{font-weight:600}'
-+ '.sign .line{margin:26px auto 0;width:260px;border-top:1px dotted #666;padding-top:3px;font-weight:600}'
++ '.sign .line{margin:2px auto 0;width:260px;border-top:1px dotted #666;padding-top:3px;font-weight:600}'
++ '.sign .sig{display:block;height:44px;margin:6px auto -8px}'
 + '.note{text-align:center;font-size:12px;margin-top:14px}';
 
 /* ---------- form 2: ใบรับรองแพทย์ 5 โรค ---------- */
@@ -212,7 +213,7 @@ function renderCertFive(c, opts){
   + '<ol class="five5">'+FIVE.map(function(d){ return '<li>'+esc(d)+'</li>'; }).join('')+'</ol>'
   + '<p class="l">สรุปความเห็นและข้อแนะนำของแพทย์ <span class="dot fill">'+esc(x.doctor_opinion||'')+'</span></p>'
   + '<p class="l"><span class="dot fill"></span></p>'
-  + '<div class="fsign"><div class="line"></div><div class="nm">( นพ.มานิตย์   จารุวรรณ )</div></div>'
+  + '<div class="fsign"><img class="sig" src="/sign.png" alt=""><div class="line"></div><div class="nm">( นพ.มานิตย์   จารุวรรณ )</div></div>'
   + '<div class="rem">หมายเหตุ &nbsp;(1) ต้องเป็นแพทย์ซึ่งได้ขึ้นทะเบียนรับใบอนุญาตประกอบวิชาชีพเวชกรรม<br>'
   + '<span class="pad">(2) ให้แสดงว่าเป็นผู้มีร่างกายสมบูรณ์เพียงใด ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||30)+' วัน นับแต่วันที่ตรวจร่างกาย</span><br>'
   + '<span class="pad">(3) ใบรับรองแพทย์ฉบับนี้จะสมบูรณ์เมื่อประทับตราโรงพยาบาล</span></div>'
@@ -251,7 +252,7 @@ function renderCertSick(c, opts){
   + '<p class="l">การวินิจฉัยโรค <span class="dot fill">'+(x.diagnosis==='__redacted__'?'<i>— แสดงเฉพาะบนใบรับรองฉบับจริง —</i>':esc(x.diagnosis||''))+'</span></p>'
   + '<p class="l">ความเห็น <span class="dot fill">'+esc(x.opinion||'')+'</span></p>'
   + '<p class="l"><span class="dot fill"></span></p>'
-  + '<div class="fsign"><div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ผู้ตรวจรักษา</div></div>'
+  + '<div class="fsign"><img class="sig" src="/sign.png" alt=""><div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ผู้ตรวจรักษา</div></div>'
   + confirmBadge(c)
   + '</div>';
 }
@@ -279,7 +280,7 @@ function renderCertSnor11(c, opts){
   + '<p class="l">โรคอื่น ๆ <span class="dot fill">'+esc(x.other_diseases||'–')+'</span></p>'
   + '<p class="l">สรุปความเห็นและข้อแนะนำของแพทย์ <span class="dot fill">'+esc(x.sn_opinion||'')+'</span></p>'
   + '<p class="l"><span class="dot fill"></span></p>'
-  + '<div class="fsign"><div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ตรวจร่างกาย</div></div>'
+  + '<div class="fsign"><img class="sig" src="/sign.png" alt=""><div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ตรวจร่างกาย</div></div>'
   + '<div class="rem">หมายเหตุ &nbsp;(๑) ให้ประทับตราสถานพยาบาลพร้อมทั้งระบุที่อยู่<br>'
   + '<span class="pad">(๒) ต้องเป็นแพทย์ซึ่งได้ขึ้นทะเบียนรับใบอนุญาตประกอบวิชาชีพเวชกรรม</span><br>'
   + '<span class="pad">(๓) ให้แสดงว่าเป็นผู้ที่มีร่างกายสมบูรณ์เพียงใด ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||30)+' วัน นับแต่วันที่ตรวจร่างกาย</span></div>'
@@ -312,7 +313,7 @@ function renderCertBilingual(c, opts){
   + '<p class="l">แล้วปรากฏว่า <span class="dot fill">'+esc(c.patient_name)+'</span> ปราศจากโรคดังต่อไปนี้<span class="en">And have found (name) free from the following diseases:</span></p>'
   + '<ul class="bilist">'+BI_DISEASES.map(function(d){ return '<li>'+esc(d[0])+'<span class="en">'+esc(d[1])+'</span></li>'; }).join('')+'</ul>'
   + '<p class="l j"><span class="dot fill">'+esc(c.patient_name)+'</span> เป็นผู้มีร่างกายแข็งแรงสมบูรณ์ ไม่เป็นผู้มีจิตฟั่นเฟือนหรือไม่สมประกอบ หรือไม่เป็นผู้ที่มีร่างกายทุพพลภาพ หรือเป็นโรคดังกล่าวข้างต้น<span class="en">(name) is in good physical and mental health, free from any defect.</span></p>'
-  + '<div class="fsign"><div class="line"></div><div class="nm">('+esc(c.doctor_name)+')</div><div>นายแพทย์ผู้ตรวจ / Signature M.D.</div></div>'
+  + '<div class="fsign"><img class="sig" src="/sign.png" alt=""><div class="line"></div><div class="nm">('+esc(c.doctor_name)+')</div><div>นายแพทย์ผู้ตรวจ / Signature M.D.</div></div>'
   + confirmBadge(c)
   + '</div>';
 }
@@ -349,6 +350,7 @@ CERT_CSS += ''
 + '.snlist{margin:6px 0 6px 46px;padding:0;columns:2;column-gap:44px;list-style-position:inside}.snlist li{margin:2px 0}'
 + '.bilist{margin:6px 0 6px 46px;padding:0;list-style-position:inside}.bilist li{margin:3px 0}.bilist li .en{margin-left:22px}'
 + '.fsign{text-align:right;margin:14px 60px 0 0}'
-+ '.fsign .line{border-bottom:1px dotted #000;width:230px;margin:22px 0 3px auto}'
++ '.fsign .line{border-bottom:1px dotted #000;width:230px;margin:2px 0 3px auto}'
++ '.fsign .sig{display:block;height:44px;margin:6px 90px -10px auto}'
 + '.fsign .nm{font-weight:700;width:230px;margin-left:auto;text-align:center}'
 + '.rem{font-size:12px;margin-top:14px;line-height:1.6}.rem .pad{display:inline-block;padding-left:52px}';
