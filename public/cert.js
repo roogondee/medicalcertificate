@@ -158,6 +158,7 @@ function bx(on){ return '<span class="bx">'+(on?'&#10003;':'')+'</span>'; }
 function renderCertFive(c, opts){
   opts = opts || {};
   var x = c.extra || {};
+  var drv = c.form_type === 'driving';
   var corner = opts.qrId
     ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'
     : '<div class="hn">HN '+esc(c.hn)+'</div>';
@@ -178,9 +179,12 @@ function renderCertFive(c, opts){
   + '<p class="l i">1. โรคประจำตัว &nbsp;'+yn(x.h_chronic, x.h_chronic_detail)+'</p>'
   + '<p class="l i">2. อุบัติเหตุ และ ผ่าตัด &nbsp;'+yn(x.h_accident, x.h_accident_detail)+'</p>'
   + '<p class="l i">3. เคยเข้ารับการรักษาในโรงพยาบาล &nbsp;'+yn(x.h_hospital, x.h_hospital_detail)+'</p>'
-  + '<p class="l i">4. ประวัติอื่นที่สำคัญ <span class="dot fill">'+esc(x.h_other||'')+'</span></p>'
+  + (drv ? '<p class="l i">4. โรคลมชัก &nbsp;'+yn(x.h_epilepsy, x.h_epilepsy_detail)+'</p>'
+         + '<p class="l i">5. ประวัติอื่นที่สำคัญ <span class="dot fill">'+esc(x.h_other||'')+'</span></p>'
+         + '<p class="note2" style="text-align:left;margin-left:26px">* ในกรณีมีโรคลมชัก ให้แนบประวัติการรักษาจากแพทย์ผู้รักษาว่าท่านปลอดจากอาการชักมากกว่า 1 ปี เพื่ออนุญาตให้ขับรถได้</p>'
+       : '<p class="l i">4. ประวัติอื่นที่สำคัญ <span class="dot fill">'+esc(x.h_other||'')+'</span></p>')
   + '<p class="sgn">ลงชื่อ <span class="dot w180"></span> วันที่ <span class="dot w50">'+esc(thDay(c.exam_date))+'</span> เดือน <span class="dot w90">'+esc(thMonth(c.exam_date))+'</span> พ.ศ. <span class="dot w60">'+esc(thYear(c.exam_date))+'</span></p>'
-  + '<p class="note2">(ในกรณีเด็กที่ไม่สามารถรับรองตนเองได้ให้ผู้ปกครองลงนามรับรองแทนได้)</p>'
+  + (drv ? '' : '<p class="note2">(ในกรณีเด็กที่ไม่สามารถรับรองตนเองได้ให้ผู้ปกครองลงนามรับรองแทนได้)</p>')
   + '<div class="part">ส่วนที่ 2</div><div class="partt">ของแพทย์</div>'
   + '<p class="l">สถานที่ตรวจ <span class="dot w260">'+esc(x.exam_place||'โรงพยาบาลดับเบิ้ลยู เมดิคอล')+'</span> วันที่ <span class="dot w50">'+esc(thDay(c.exam_date))+'</span> เดือน <span class="dot w90">'+esc(thMonth(c.exam_date))+'</span> พ.ศ. <span class="dot w60">'+esc(thYear(c.exam_date))+'</span></p>'
   + '<p class="l">ข้าพเจ้านายแพทย์/แพทย์หญิง <span class="dot fill">'+esc(c.doctor_name)+'</span></p>'
@@ -204,9 +208,105 @@ function thDay(iso){ if(!iso) return ''; return String(Number(String(iso).slice(
 function thMonth(iso){ if(!iso) return ''; return TH_M[Number(String(iso).slice(5,7))-1]; }
 function thYear(iso){ if(!iso) return ''; return String(Number(String(iso).slice(0,4))+543); }
 
+function cornerOf(c, opts){
+  return opts.qrId
+    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'
+    : '<div class="hn">HN '+esc(c.hn)+'</div>';
+}
+function hospHeader(corner){
+  return '<div class="hdr"><div class="lg"><img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล"></div>'
+  + '<div class="info">'+esc(HOSP.nameTh)+' ใบอนุญาตให้ดำเนินการสถานพยาบาลเลขที่ '+esc(HOSP.license)+'<br>ที่อยู่ '+esc(HOSP.addr)+'<br>โทร. '+esc(HOSP.tel)+'</div>'
+  + '<div class="qrcol">เลขที่บัตรสถานพยาบาล'+corner+'</div></div>';
+}
+
+/* ---------- form 3: ใบรับรองการตรวจรักษา (ใบลาป่วย) ---------- */
+function renderCertSick(c, opts){
+  opts = opts || {};
+  var x = c.extra || {};
+  return ''
+  + '<div class="sheet five">'
+  + hospHeader(cornerOf(c, opts))
+  + '<h1>ใบรับรองแพทย์</h1>'
+  + '<div class="subrow"><div class="sub">ใบรับรองการตรวจรักษา</div><div class="date">วันที่ '+thDate(c.exam_date)+'</div></div>'
+  + '<p class="l" style="margin-top:14px">ข้าพเจ้า <span class="dot fill">'+esc(c.doctor_name)+'</span></p>'
+  + '<p class="l">ใบอนุญาตประกอบวิชาชีพเวชกรรมเลขที่ <span class="dot w110">'+esc(c.doctor_license)+'</span> สถานพยาบาลชื่อ <span class="dot fill">'+esc(HOSP.nameTh)+'</span></p>'
+  + '<p class="l">ได้ทำการตรวจรักษา นาย/นาง/นางสาว <span class="dot fill">'+esc(c.patient_name)+'</span></p>'
+  + '<p class="l">เมื่อวันที่ <span class="dot w180">'+thDate(c.exam_date)+'</span></p>'
+  + '<p class="l">มีอาการ <span class="dot fill">'+esc(x.symptoms||'')+'</span></p>'
+  + '<p class="l">การวินิจฉัยโรค <span class="dot fill">'+esc(x.diagnosis||'')+'</span></p>'
+  + '<p class="l">ความเห็น <span class="dot fill">'+esc(x.opinion||'')+'</span></p>'
+  + '<p class="l"><span class="dot fill"></span></p>'
+  + '<div class="fsign"><div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ผู้ตรวจรักษา</div></div>'
+  + '</div>';
+}
+
+/* ---------- form 4: แบบ สณ.๑๑ ---------- */
+var SN_DISEASES = ['วัณโรค','อหิวาตกโรค','ไข้รากสาดน้อย (ไทฟอยด์)','โรคบิด','ไข้สุกใส',
+  'โรคคางทูม','โรคเรื้อน','โรคผิวหนังที่น่ารังเกียจ','โรคตับอักเสบที่เกิดจากไวรัส'];
+function renderCertSnor11(c, opts){
+  opts = opts || {};
+  var x = c.extra || {};
+  return ''
+  + '<div class="sheet five">'
+  + hospHeader(cornerOf(c, opts))
+  + '<div class="bkno">แบบ สณ.๑๑</div>'
+  + '<h1>ใบรับรองแพทย์</h1>'
+  + '<div class="subrow"><div class="sub">สถานพยาบาล '+esc(HOSP.nameTh)+'</div><div class="date">วันที่ '+thDate(c.exam_date)+'</div></div>'
+  + '<p class="l" style="margin-top:12px">ข้าพเจ้า นายแพทย์/แพทย์หญิง <span class="dot fill">'+esc(c.doctor_name)+'</span></p>'
+  + '<p class="l j">แพทย์ปริญญา เป็นแพทย์ที่ได้ขึ้นทะเบียนและรับใบอนุญาตให้ผู้ประกอบโรคศิลปะแผนปัจจุบันชั้นหนึ่ง สาขาเวชกรรม</p>'
+  + '<p class="l">ใบอนุญาตประกอบวิชาชีพเวชกรรมเลขที่ <span class="dot w110">'+esc(c.doctor_license)+'</span> ตำแหน่งหน้าที่ <span class="dot w180">'+esc(x.position||'แพทย์ผู้ตรวจ')+'</span></p>'
+  + '<p class="l">ประจำโรงพยาบาล <span class="dot fill">'+esc(HOSP.nameTh)+'</span></p>'
+  + '<p class="l">ได้ทำการตรวจร่างกาย (นาย/นาง/น.ส.) <span class="dot fill">'+esc(c.patient_name)+'</span></p>'
+  + '<p class="l">อายุ <span class="dot w60">'+esc(c.age)+'</span> ปี เมื่อวันที่ <span class="dot w50">'+esc(thDay(c.exam_date))+'</span> เดือน <span class="dot w90">'+esc(thMonth(c.exam_date))+'</span> พ.ศ. <span class="dot w60">'+esc(thYear(c.exam_date))+'</span> แล้ว</p>'
+  + '<p class="l j">ปรากฏว่า (นาย/นาง/น.ส.) <span class="dot fill">'+esc(c.patient_name)+'</span> ไม่เป็นผู้มีร่างกายทุพพลภาพจนไม่สามารถปฏิบัติหน้าที่ได้ ไร้ความสามารถหรือจิตฟั่นเฟือนไม่สมประกอบ และปราศจากโรคเหล่านี้</p>'
+  + '<ul class="snlist">'+SN_DISEASES.map(function(d){ return '<li>'+esc(d)+'</li>'; }).join('')+'</ul>'
+  + '<p class="l">โรคอื่น ๆ <span class="dot fill">'+esc(x.other_diseases||'–')+'</span></p>'
+  + '<p class="l">สรุปความเห็นและข้อแนะนำของแพทย์ <span class="dot fill">'+esc(x.sn_opinion||'')+'</span></p>'
+  + '<p class="l"><span class="dot fill"></span></p>'
+  + '<div class="fsign"><div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ตรวจร่างกาย</div></div>'
+  + '<div class="rem">หมายเหตุ &nbsp;(๑) ให้ประทับตราสถานพยาบาลพร้อมทั้งระบุที่อยู่<br>'
+  + '<span class="pad">(๒) ต้องเป็นแพทย์ซึ่งได้ขึ้นทะเบียนรับใบอนุญาตประกอบวิชาชีพเวชกรรม</span><br>'
+  + '<span class="pad">(๓) ให้แสดงว่าเป็นผู้ที่มีร่างกายสมบูรณ์เพียงใด ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||30)+' วัน นับแต่วันที่ตรวจร่างกาย</span></div>'
+  + '</div>';
+}
+
+/* ---------- form 5: ใบรับรองแพทย์ 2 ภาษา (ไทย-อังกฤษ) ---------- */
+var BI_DISEASES = [
+  ['โรคเรื้อน','LEPROSY'],
+  ['วัณโรคระยะแพร่กระจายเชื้อ','PULMONARY TUBERCULOSIS'],
+  ['โรคเท้าช้างในระยะที่ปรากฏอาการเป็นที่รังเกียจต่อสังคม','ELEPHANTIASIS'],
+  ['โรคติดยาเสพติดให้โทษ','DRUG ADDICTION'],
+  ['โรคพิษสุราเรื้อรัง','CHRONIC ALCOHOLISM'],
+  ['โรคซิฟิลิสในระยะที่ 3','THIRD STEP OF SYPHILIS'],
+  ['การตั้งครรภ์','PREGNANCY']
+];
+function renderCertBilingual(c, opts){
+  opts = opts || {};
+  var x = c.extra || {};
+  return ''
+  + '<div class="sheet five">'
+  + hospHeader(cornerOf(c, opts))
+  + '<h1>ใบรับรองแพทย์<span class="en" style="text-align:center">MEDICAL CERTIFICATE</span></h1>'
+  + '<p class="l" style="margin-top:10px;text-align:right">วันที่ <span class="dot w180">'+thDate(c.exam_date)+'</span><span class="en" style="text-align:right">Date</span></p>'
+  + '<p class="l">ข้าพเจ้า นายแพทย์ <span class="dot fill">'+esc(c.doctor_name)+'</span> แพทย์แผนปัจจุบันชั้นหนึ่ง<span class="en">Name '+esc(c.doctor_name)+', a medical doctor</span></p>'
+  + '<p class="l">ใบอนุญาตประกอบวิชาชีพ เลขที่ <span class="dot w110">'+esc(c.doctor_license)+'</span> ออกให้ ณ วันที่ <span class="dot w180">'+esc(x.license_issued||'29 เมษายน 2525')+'</span><span class="en">Holding medical license No. '+esc(String(c.doctor_license||'').replace(/^ว\./,''))+'</span></p>'
+  + '<p class="l">ได้ทำการตรวจร่างกายของ <span class="dot fill">'+esc(c.patient_name)+'</span> เมื่อวันที่ <span class="dot w180">'+thDate(c.exam_date)+'</span><span class="en">Have examined (name) on date</span></p>'
+  + '<p class="l">เลขที่บัตรประชาชน/หนังสือเดินทางเลขที่ <span class="dot w260">'+esc(c.doc_no)+'</span><span class="en">ID Card / Passport No.</span></p>'
+  + '<p class="l">แล้วปรากฏว่า <span class="dot fill">'+esc(c.patient_name)+'</span> ปราศจากโรคดังต่อไปนี้<span class="en">And have found (name) free from the following diseases:</span></p>'
+  + '<ul class="bilist">'+BI_DISEASES.map(function(d){ return '<li>'+esc(d[0])+'<span class="en">'+esc(d[1])+'</span></li>'; }).join('')+'</ul>'
+  + '<p class="l j"><span class="dot fill">'+esc(c.patient_name)+'</span> เป็นผู้มีร่างกายแข็งแรงสมบูรณ์ ไม่เป็นผู้มีจิตฟั่นเฟือนหรือไม่สมประกอบ หรือไม่เป็นผู้ที่มีร่างกายทุพพลภาพ หรือเป็นโรคดังกล่าวข้างต้น<span class="en">(name) is in good physical and mental health, free from any defect.</span></p>'
+  + '<div class="fsign"><div class="line"></div><div class="nm">('+esc(c.doctor_name)+')</div><div>นายแพทย์ผู้ตรวจ / Signature M.D.</div></div>'
+  + '</div>';
+}
+
 var renderCertAlien = renderCert;
 renderCert = function(c, opts){
-  return (c && c.form_type === 'five_disease') ? renderCertFive(c, opts) : renderCertAlien(c, opts);
+  var t = c && c.form_type;
+  if(t === 'five_disease' || t === 'driving') return renderCertFive(c, opts);
+  if(t === 'sick_leave')  return renderCertSick(c, opts);
+  if(t === 'snor11')      return renderCertSnor11(c, opts);
+  if(t === 'bilingual')   return renderCertBilingual(c, opts);
+  return renderCertAlien(c, opts);
 };
 
 CERT_CSS += ''
@@ -227,6 +327,9 @@ CERT_CSS += ''
 + '.sgn{text-align:right;margin:10px 0 2px}'
 + '.note2{text-align:center;font-size:12px;margin-bottom:8px}'
 + '.five5{margin:4px 0 6px 46px;padding:0}.five5 li{margin:1px 0}'
++ '.en{display:block;font-size:11px;color:#555;font-weight:400;line-height:1.3}'
++ '.snlist{margin:6px 0 6px 46px;padding:0;columns:2;column-gap:44px;list-style-position:inside}.snlist li{margin:2px 0}'
++ '.bilist{margin:6px 0 6px 46px;padding:0;list-style-position:inside}.bilist li{margin:3px 0}.bilist li .en{margin-left:22px}'
 + '.fsign{text-align:right;margin:14px 60px 0 0}'
 + '.fsign .line{border-bottom:1px dotted #000;width:230px;margin:22px 0 3px auto}'
 + '.fsign .nm{font-weight:700;width:230px;margin-left:auto;text-align:center}'

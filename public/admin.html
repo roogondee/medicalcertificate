@@ -141,6 +141,10 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
           <select id="f-form_type">
             <option value="alien_worker">ใบรับรองแพทย์ ตรวจสุขภาพคนต่างด้าว/แรงงานต่างด้าว (90 วัน)</option>
             <option value="five_disease">ใบรับรองแพทย์ 5 โรค (1 เดือน)</option>
+            <option value="driving">ใบรับรองแพทย์ สำหรับใบอนุญาตขับรถ (1 เดือน)</option>
+            <option value="sick_leave">ใบรับรองการตรวจรักษา / ใบลาป่วย (1 เดือน)</option>
+            <option value="snor11">ใบรับรองแพทย์ แบบ สณ.11 ราชการ (1 เดือน)</option>
+            <option value="bilingual">ใบรับรองแพทย์ 2 ภาษา ไทย-อังกฤษ (1 เดือน)</option>
           </select></div></div>
         </fieldset>
         <fieldset><legend>ผู้รับการตรวจ</legend>
@@ -223,6 +227,35 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
           <div class="row" style="margin-top:8px">
             <div style="flex:2"><label>สรุปความเห็นและข้อแนะนำของแพทย์</label><input id="x-doctor_opinion"></div>
           </div>
+          <div class="row only-driving" style="margin-top:8px">
+            <div><label>โรคลมชัก</label><select id="x-h_epilepsy"><option value="no">ไม่มี</option><option value="yes">มี</option></select></div>
+            <div style="flex:2"><label>ระบุ (ถ้ามี — ต้องแนบประวัติปลอดชักเกิน 1 ปี)</label><input id="x-h_epilepsy_detail"></div>
+          </div>
+        </fieldset>
+        <fieldset class="only-sick hide"><legend>ข้อมูลใบรับรองการตรวจรักษา</legend>
+          <div class="row">
+            <div style="flex:2"><label>มีอาการ</label><input id="x-symptoms"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div style="flex:2"><label>การวินิจฉัยโรค</label><input id="x-diagnosis"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div style="flex:2"><label>ความเห็นแพทย์ (เช่น เห็นควรพักรักษาตัว ... วัน)</label><input id="x-opinion"></div>
+          </div>
+        </fieldset>
+        <fieldset class="only-snor hide"><legend>ข้อมูลแบบ สณ.11</legend>
+          <div class="row">
+            <div><label>ตำแหน่งหน้าที่ของแพทย์</label><input id="x-position" value="แพทย์ผู้ตรวจ"></div>
+            <div style="flex:2"><label>โรคอื่น ๆ (ถ้ามี)</label><input id="x-other_diseases"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div style="flex:2"><label>สรุปความเห็นและข้อแนะนำของแพทย์</label><input id="x-sn_opinion"></div>
+          </div>
+        </fieldset>
+        <fieldset class="only-bi hide"><legend>ข้อมูลใบรับรอง 2 ภาษา</legend>
+          <div class="row">
+            <div><label>วันที่ออกใบอนุญาตแพทย์ (แสดงบนใบ)</label><input id="x-license_issued" value="29 เมษายน 2525"></div>
+          </div>
         </fieldset>
         <div class="row" style="margin-top:4px">
           <div style="flex:0 0 auto"><button type="submit" id="save">บันทึก</button></div>
@@ -273,6 +306,7 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
 var TOK = null, ROWS = [], EDIT = null;
 var $ = function(id){ return document.getElementById(id); };
 var DIS = ['วัณโรค','โรคเรื้อน','โรคเท้าช้าง','โรคซิฟิลิส'];
+var FORM_LABEL = { five_disease:'5 โรค', driving:'ใบขับขี่', sick_leave:'ตรวจรักษา', snor11:'สณ.11', bilingual:'2 ภาษา' };
 
 /* ---------- api ---------- */
 function api(path, opts){
@@ -373,7 +407,7 @@ function drawList(){
     return '<tr>'
       + '<td><input type="checkbox" class="sel" data-hn="'+esc(c.hn)+'" style="width:auto"></td>'
       + '<td class="mono">'+esc(c.hn)+'</td>'
-      + '<td>'+esc(c.patient_name)+(c.form_type==='five_disease'?' <span class="pill" style="background:#eef3fb;color:#12428f">5 โรค</span>':'')+'</td>'
+      + '<td>'+esc(c.patient_name)+(FORM_LABEL[c.form_type]?' <span class="pill" style="background:#eef3fb;color:#12428f">'+FORM_LABEL[c.form_type]+'</span>':'')+'</td>'
       + '<td class="mono">'+esc(c.doc_no)+'</td>'
       + '<td>'+esc(c.nationality)+'</td>'
       + '<td class="mono">'+thDate(c.exam_date)+'</td>'
@@ -436,11 +470,22 @@ function doPrint(list){
 })();
 
 var XF = ['book_no','national_id','contact_addr','bp','pulse','exam_place','h_chronic','h_chronic_detail',
-  'h_accident','h_accident_detail','h_hospital','h_hospital_detail','h_other','general','general_detail','doctor_opinion'];
+  'h_accident','h_accident_detail','h_hospital','h_hospital_detail','h_other','general','general_detail','doctor_opinion',
+  'h_epilepsy','h_epilepsy_detail','symptoms','diagnosis','opinion','position','other_diseases','sn_opinion','license_issued'];
+var FORM_SHOW = {
+  alien_worker: ['only-alien'],
+  five_disease: ['only-five'],
+  driving:      ['only-five','only-driving'],
+  sick_leave:   ['only-sick'],
+  snor11:       ['only-snor'],
+  bilingual:    ['only-bi']
+};
+var FORM_DAYS = { alien_worker:90, five_disease:30, driving:30, sick_leave:30, snor11:30, bilingual:30 };
 function applyFormType(){
-  var five = $('f-form_type').value === 'five_disease';
-  Array.prototype.forEach.call(document.querySelectorAll('.only-alien'), function(x){ x.classList.toggle('hide', five); });
-  Array.prototype.forEach.call(document.querySelectorAll('.only-five'), function(x){ x.classList.toggle('hide', !five); });
+  var show = FORM_SHOW[$('f-form_type').value] || [];
+  ['only-alien','only-five','only-driving','only-sick','only-snor','only-bi'].forEach(function(cls){
+    Array.prototype.forEach.call(document.querySelectorAll('.'+cls), function(x){ x.classList.toggle('hide', show.indexOf(cls) < 0); });
+  });
 }
 var FIELDS = ['patient_name','doc_no','dob','age','birth_city','country','nationality','occupation',
   'employer_name','employer_addr','exam_date','valid_days','height','weight','skin_color',
@@ -459,7 +504,7 @@ function resetForm(){
 $('cancel').addEventListener('click', resetForm);
 $('f-form_type').addEventListener('change', function(){
   applyFormType();
-  $('f-valid_days').value = ($('f-form_type').value==='five_disease') ? 30 : 90;
+  $('f-valid_days').value = FORM_DAYS[$('f-form_type').value] || 90;
 });
 
 function editCert(hn){
