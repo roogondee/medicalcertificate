@@ -163,7 +163,7 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
             <div><label>เลขที่ passport / บัตรประจำตัว</label><input id="f-doc_no"></div>
           </div>
           <div class="row">
-            <div><label>วัน/เดือน/ปีเกิด</label><input id="f-dob" type="date"></div>
+            <div><label>วัน/เดือน/ปีเกิด (วว/ดด/ปปปป)</label><input id="f-dob" type="text" inputmode="numeric" placeholder="เช่น 15/01/1994" maxlength="10" autocomplete="off"></div>
             <div><label>อายุ (ปี)</label><input id="f-age" type="number" min="0" max="120"></div>
             <div><label>เมืองที่เกิด</label><input id="f-birth_city"></div>
             <div><label>ประเทศ</label><input id="f-country"></div>
@@ -189,7 +189,7 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
         </fieldset>
         <fieldset><legend>การตรวจ</legend>
           <div class="row">
-            <div><label>วันที่ตรวจ *</label><input id="f-exam_date" type="date" required></div>
+            <div><label>วันที่ตรวจ * (วว/ดด/ปปปป)</label><input id="f-exam_date" type="text" inputmode="numeric" placeholder="วว/ดด/ปปปป" maxlength="10" required autocomplete="off"></div>
             <div><label>อายุใบรับรอง (วัน)</label><input id="f-valid_days" type="number" value="90"></div>
             <div><label>ความสูง (ซม.)</label><input id="f-height" type="number" step="0.1"></div>
             <div><label>น้ำหนัก (กก.)</label><input id="f-weight" type="number" step="0.1"></div>
@@ -631,10 +631,40 @@ $('f-photo').addEventListener('change', function(e){
   reader.readAsDataURL(f);
 });
 
+/* ---------- dd/mm/yyyy date fields ---------- */
+function parseDMY(v){
+  if(!v) return null;
+  v = String(v).trim();
+  var m = v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if(!m) return null;
+  var d = Number(m[1]), mo = Number(m[2]), y = Number(m[3]);
+  if(y > 2200) y -= 543; /* กรอกปี พ.ศ. ได้ */
+  if(mo < 1 || mo > 12 || d < 1 || d > 31 || y < 1900 || y > 2200) return null;
+  var iso = y + '-' + ('0'+mo).slice(-2) + '-' + ('0'+d).slice(-2);
+  var t = new Date(iso + 'T00:00:00Z');
+  if(isNaN(t) || t.getUTCDate() !== d) return null;
+  return iso;
+}
+function fmtDMY(iso){
+  if(!iso) return '';
+  var a = String(iso).slice(0,10).split('-');
+  return a[2] + '/' + a[1] + '/' + a[0];
+}
+function dateMask(el){
+  el.addEventListener('input', function(){
+    var d = el.value.replace(/\D/g,'').slice(0,8);
+    var out = d.slice(0,2);
+    if(d.length > 2) out += '/' + d.slice(2,4);
+    if(d.length > 4) out += '/' + d.slice(4,8);
+    el.value = out;
+  });
+}
+dateMask($('f-dob')); dateMask($('f-exam_date'));
+
 function resetForm(){
   EDIT = null; $('eh').textContent = 'เพิ่มใบรับรองแพทย์';
   $('ef').reset(); $('f-id').value = '';
-  $('f-exam_date').value = today();
+  $('f-exam_date').value = fmtDMY(today());
   $('f-occupation').value='กรรมกร'; $('f-skin_color').value='ดำแดง'; $('f-general_condition').value='ปกติ';
   $('f-valid_days').value=90; $('f-doctor_name').value='นายแพทย์มานิตย์ จารุวรรณ'; $('f-doctor_license').value='ว.10291';
   $('f-form_type').value='alien_worker'; $('x-exam_place').value='โรงพยาบาลดับเบิ้ลยู เมดิคอล'; applyFormType();
@@ -657,8 +687,8 @@ function editCert(hn){
   var X = c.extra || {};
   XF.forEach(function(f){ var el=$('x-'+f); if(el) el.value = (X[f]===null||X[f]===undefined)?'':X[f]; });
   FIELDS.forEach(function(f){ var el=$('f-'+f); if(el) el.value = (c[f]===null||c[f]===undefined)?'':c[f]; });
-  if(c.dob) $('f-dob').value = String(c.dob).slice(0,10);
-  $('f-exam_date').value = String(c.exam_date).slice(0,10);
+  $('f-dob').value = fmtDMY(c.dob);
+  $('f-exam_date').value = fmtDMY(c.exam_date);
   TESTS.forEach(function(t){ var el=$('r-'+t[0]); if(el) el.value = (c.results&&c.results[t[0]]) || (t[0]==='pregnancy'?'no':'normal'); });
   document.querySelector('input[name=sum][value="'+(c.summary||'healthy')+'"]').checked = true;
   Array.prototype.forEach.call(document.querySelectorAll('.dis'), function(x){
@@ -683,6 +713,8 @@ function collect(){
     var v = el.value.trim();
     o[f] = v === '' ? null : v;
   });
+  o.dob = parseDMY(o.dob);
+  o.exam_date = parseDMY(o.exam_date);
   ['age','valid_days','height','weight'].forEach(function(k){ if(o[k]!==null) o[k]=Number(o[k]); });
   if(o.valid_days===null) o.valid_days = 90;
   var res = {}; TESTS.forEach(function(t){ res[t[0]] = $('r-'+t[0]).value; });
@@ -698,6 +730,8 @@ function collect(){
 $('ef').addEventListener('submit', function(e){
   e.preventDefault(); $('eerr').textContent=''; $('eok').textContent='';
   var body = collect(), id = $('f-id').value;
+  if(!body.exam_date){ $('eerr').textContent = 'กรุณากรอกวันที่ตรวจเป็น วว/ดด/ปปปป เช่น 06/08/2026 (พ.ศ. ก็ได้)'; return; }
+  if($('f-dob').value.trim() && !body.dob){ $('eerr').textContent = 'วันเดือนปีเกิดไม่ถูกต้อง กรอกเป็น วว/ดด/ปปปป'; return; }
   var p = id
     ? api('/rest/v1/certificates?id=eq.'+id, {method:'PATCH', body: JSON.stringify(body), prefer:'return=representation'})
     : api('/rest/v1/certificates', {method:'POST', body: JSON.stringify(body), prefer:'return=representation'});
@@ -763,8 +797,11 @@ function normDate(v){
   if(!v) return null;
   if(v instanceof Date) return v.toISOString().slice(0,10);
   v = String(v).trim();
-  var m = v.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);
-  if(m) return m[3]+'-'+m[2]+'-'+m[1];
+  var m = v.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+  if(m){
+    var y = Number(m[3]); if(y > 2200) y -= 543;
+    return y+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+  }
   m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if(m) return m[0];
   return null;
