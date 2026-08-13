@@ -36,6 +36,13 @@ function addDays(iso,n){ var t=new Date(String(iso).slice(0,10)+'T00:00:00Z'); t
 function today(){ return new Date().toISOString().slice(0,10); }
 function daysLeft(c){ return Math.round((new Date(addDays(c.exam_date, c.valid_days||90)+'T00:00:00Z') - new Date(today()+'T00:00:00Z'))/86400000); }
 
+function sigImg(c){
+  var n = String((c && c.doctor_name) || '');
+  if(n.indexOf('มานิตย์') >= 0 && n.indexOf('จารุวรรณ') >= 0){
+    return '<img class="sig" src="/sign.png" alt="">';
+  }
+  return '<span class="sig"></span>';
+}
 function certStatus(c){
   if(c.status === 'void') return {cls:'bad', ic:'&#10005;', head:'ใบรับรองถูกยกเลิก', sub:'ใบรับรองฉบับนี้ถูกยกเลิกโดยโรงพยาบาล ไม่สามารถใช้อ้างอิงได้'};
   var exp = addDays(c.exam_date, c.valid_days||90), n = daysLeft(c);
@@ -103,7 +110,7 @@ function renderCert(c, opts){
   + '<li class="ind">3.1 ร่างกายทุพพลภาพจึงไม่สามารถประกอบการหาเลี้ยงชีพได้ / จิตฟั่นเฟือน ไม่สมประกอบ</li>'
   + '<li class="ind">3.2 เป็นโรคไม่อนุญาตให้ทำงาน และไม่ให้การประกันสุขภาพ (ตามประกาศกระทรวงสาธารณสุขฯ)</li>'
   + '</ol></div>'
-  + '<div class="sign"><div class="role">แพทย์ผู้ตรวจ</div><img class="sig" src="/sign.png" alt=""><div class="line">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div></div>'
+  + '<div class="sign"><div class="role">แพทย์ผู้ตรวจ</div>'+sigImg(c)+'<div class="line">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div></div>'
   + '<div class="note">( ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||90)+' วัน นับแต่วันที่ตรวจร่างกาย )</div>'
   + confirmBadge(c)
   + '</div>';
@@ -213,7 +220,7 @@ function renderCertFive(c, opts){
   + '<ol class="five5">'+FIVE.map(function(d){ return '<li>'+esc(d)+'</li>'; }).join('')+'</ol>'
   + '<p class="l">สรุปความเห็นและข้อแนะนำของแพทย์ <span class="dot fill">'+esc(x.doctor_opinion||'')+'</span></p>'
   + '<p class="l"><span class="dot fill"></span></p>'
-  + '<div class="fsign"><img class="sig" src="/sign.png" alt=""><div class="line"></div><div class="nm">( นพ.มานิตย์   จารุวรรณ )</div></div>'
+  + '<div class="fsign">'+sigImg(c)+'<div class="line"></div><div class="nm">( '+esc(c.doctor_name)+' )</div></div>'
   + '<div class="rem">หมายเหตุ &nbsp;(1) ต้องเป็นแพทย์ซึ่งได้ขึ้นทะเบียนรับใบอนุญาตประกอบวิชาชีพเวชกรรม<br>'
   + '<span class="pad">(2) ให้แสดงว่าเป็นผู้มีร่างกายสมบูรณ์เพียงใด ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||30)+' วัน นับแต่วันที่ตรวจร่างกาย</span><br>'
   + '<span class="pad">(3) ใบรับรองแพทย์ฉบับนี้จะสมบูรณ์เมื่อประทับตราโรงพยาบาล</span></div>'
@@ -252,7 +259,7 @@ function renderCertSick(c, opts){
   + '<p class="l">การวินิจฉัยโรค <span class="dot fill">'+(x.diagnosis==='__redacted__'?'<i>— แสดงเฉพาะบนใบรับรองฉบับจริง —</i>':esc(x.diagnosis||''))+'</span></p>'
   + '<p class="l">ความเห็น <span class="dot fill">'+esc(x.opinion||'')+'</span></p>'
   + '<p class="l"><span class="dot fill"></span></p>'
-  + '<div class="fsign"><img class="sig" src="/sign.png" alt=""><div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ผู้ตรวจรักษา</div></div>'
+  + '<div class="fsign">'+sigImg(c)+'<div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ผู้ตรวจรักษา</div></div>'
   + confirmBadge(c)
   + '</div>';
 }
@@ -280,7 +287,7 @@ function renderCertSnor11(c, opts){
   + '<p class="l">โรคอื่น ๆ <span class="dot fill">'+esc(x.other_diseases||'–')+'</span></p>'
   + '<p class="l">สรุปความเห็นและข้อแนะนำของแพทย์ <span class="dot fill">'+esc(x.sn_opinion||'')+'</span></p>'
   + '<p class="l"><span class="dot fill"></span></p>'
-  + '<div class="fsign"><img class="sig" src="/sign.png" alt=""><div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ตรวจร่างกาย</div></div>'
+  + '<div class="fsign">'+sigImg(c)+'<div class="line"></div><div class="nm">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div><div>แพทย์ตรวจร่างกาย</div></div>'
   + '<div class="rem">หมายเหตุ &nbsp;(๑) ให้ประทับตราสถานพยาบาลพร้อมทั้งระบุที่อยู่<br>'
   + '<span class="pad">(๒) ต้องเป็นแพทย์ซึ่งได้ขึ้นทะเบียนรับใบอนุญาตประกอบวิชาชีพเวชกรรม</span><br>'
   + '<span class="pad">(๓) ให้แสดงว่าเป็นผู้ที่มีร่างกายสมบูรณ์เพียงใด ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||30)+' วัน นับแต่วันที่ตรวจร่างกาย</span></div>'
@@ -313,7 +320,7 @@ function renderCertBilingual(c, opts){
   + '<p class="l">แล้วปรากฏว่า <span class="dot fill">'+esc(c.patient_name)+'</span> ปราศจากโรคดังต่อไปนี้<span class="en">And have found (name) free from the following diseases:</span></p>'
   + '<ul class="bilist">'+BI_DISEASES.map(function(d){ return '<li>'+esc(d[0])+'<span class="en">'+esc(d[1])+'</span></li>'; }).join('')+'</ul>'
   + '<p class="l j"><span class="dot fill">'+esc(c.patient_name)+'</span> เป็นผู้มีร่างกายแข็งแรงสมบูรณ์ ไม่เป็นผู้มีจิตฟั่นเฟือนหรือไม่สมประกอบ หรือไม่เป็นผู้ที่มีร่างกายทุพพลภาพ หรือเป็นโรคดังกล่าวข้างต้น<span class="en">(name) is in good physical and mental health, free from any defect.</span></p>'
-  + '<div class="fsign"><img class="sig" src="/sign.png" alt=""><div class="line"></div><div class="nm">('+esc(c.doctor_name)+')</div><div>นายแพทย์ผู้ตรวจ / Signature M.D.</div></div>'
+  + '<div class="fsign">'+sigImg(c)+'<div class="line"></div><div class="nm">('+esc(c.doctor_name)+')</div><div>นายแพทย์ผู้ตรวจ / Signature M.D.</div></div>'
   + confirmBadge(c)
   + '</div>';
 }
