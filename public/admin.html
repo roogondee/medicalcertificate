@@ -159,6 +159,7 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
         </fieldset>
         <fieldset><legend>ผู้รับการตรวจ</legend>
           <div class="row">
+            <div style="flex:0 0 170px"><label>เลขที่ใบรับรอง (HN)</label><input id="f-hn" inputmode="numeric" placeholder="เว้นว่าง = รันอัตโนมัติ" maxlength="12" autocomplete="off"></div>
             <div style="flex:2"><label>ชื่อ – สกุล (ภาษาอังกฤษ) *</label><input id="f-patient_name" required></div>
             <div><label>เลขที่ passport / บัตรประจำตัว</label><input id="f-doc_no"></div>
           </div>
@@ -664,6 +665,7 @@ dateMask($('f-dob')); dateMask($('f-exam_date'));
 function resetForm(){
   EDIT = null; $('eh').textContent = 'เพิ่มใบรับรองแพทย์';
   $('ef').reset(); $('f-id').value = '';
+  $('f-hn').value = ''; $('f-hn').disabled = false;
   $('f-exam_date').value = fmtDMY(today());
   $('f-occupation').value='กรรมกร'; $('f-skin_color').value='ดำแดง'; $('f-general_condition').value='ปกติ';
   $('f-valid_days').value=90; $('f-doctor_name').value='นายแพทย์มานิตย์ จารุวรรณ'; $('f-doctor_license').value='ว.10291';
@@ -687,6 +689,7 @@ function editCert(hn){
   var X = c.extra || {};
   XF.forEach(function(f){ var el=$('x-'+f); if(el) el.value = (X[f]===null||X[f]===undefined)?'':X[f]; });
   FIELDS.forEach(function(f){ var el=$('f-'+f); if(el) el.value = (c[f]===null||c[f]===undefined)?'':c[f]; });
+  $('f-hn').value = c.hn || ''; $('f-hn').disabled = true;
   $('f-dob').value = fmtDMY(c.dob);
   $('f-exam_date').value = fmtDMY(c.exam_date);
   TESTS.forEach(function(t){ var el=$('r-'+t[0]); if(el) el.value = (c.results&&c.results[t[0]]) || (t[0]==='pregnancy'?'no':'normal'); });
@@ -713,6 +716,8 @@ function collect(){
     var v = el.value.trim();
     o[f] = v === '' ? null : v;
   });
+  var hnv = $('f-hn').value.replace(/\D/g,'');
+  if(!$('f-id').value && hnv) o.hn = hnv;
   o.dob = parseDMY(o.dob);
   o.exam_date = parseDMY(o.exam_date);
   ['age','valid_days','height','weight'].forEach(function(k){ if(o[k]!==null) o[k]=Number(o[k]); });
@@ -741,7 +746,11 @@ $('ef').addEventListener('submit', function(e){
     loadList(); loadAudit();
     if(!id && c){ EDIT = c; $('f-id').value = c.id; $('eh').textContent='แก้ไขใบรับรองแพทย์ — HN '+c.hn;
       $('printone').classList.remove('hide'); $('voidbtn').classList.remove('hide'); }
-  }).catch(function(err){ $('eerr').textContent = err.message; });
+  }).catch(function(err){
+    $('eerr').textContent = /duplicate|unique/i.test(err.message)
+      ? 'เลขที่ใบรับรองนี้ถูกใช้ไปแล้ว กรุณาใช้เลขอื่น หรือเว้นว่างให้ระบบรันอัตโนมัติ'
+      : err.message;
+  });
 });
 
 $('printone').addEventListener('click', function(){
