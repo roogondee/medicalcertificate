@@ -134,7 +134,7 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
       </div>
       <div style="overflow-x:auto">
       <table class="list">
-        <thead><tr><th style="width:28px"></th><th>HN</th><th>ชื่อ – สกุล</th><th>Passport</th><th>สัญชาติ</th><th>วันที่ตรวจ</th><th>หมดอายุ</th><th>สถานะ</th><th>ยืนยัน</th><th>ผู้ออกใบ</th><th></th></tr></thead>
+        <thead><tr><th style="width:28px"></th><th>HN</th><th>ชื่อ – สกุล</th><th>Passport</th><th>สัญชาติ</th><th>วันที่ตรวจ</th><th>หมดอายุ</th><th>สถานะ</th><th>การรับรอง</th><th>ผู้ออกใบ</th><th></th></tr></thead>
         <tbody id="tb"><tr><td colspan="11" style="color:var(--mu);padding:22px">กำลังโหลด…</td></tr></tbody>
       </table>
       </div>
@@ -201,6 +201,24 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
             <div><label>แพทย์ผู้ตรวจ</label><input id="f-doctor_name" value="นายแพทย์มานิตย์ จารุวรรณ"></div>
             <div><label>เลขที่ใบประกอบวิชาชีพ</label><input id="f-doctor_license" value="ว.10291"></div>
           </div>
+        </fieldset>
+        <fieldset><legend>ห้องปฏิบัติการ / หลักฐานว่าตรวจจริง</legend>
+          <p class="hint" style="margin:-4px 0 8px">กรอกเท่าที่มี — ข้อมูลส่วนนี้จะขึ้นบนใบพิมพ์และหน้าตรวจสอบของลูกค้า (เว้นว่างทั้งหมด = ใบพิมพ์เหมือนเดิมทุกประการ)</p>
+          <div class="row">
+            <div><label>เลขที่สิ่งส่งตรวจ (Lab No.)</label>
+              <div style="display:flex;gap:6px"><input id="l-lab_no" placeholder="เช่น L69-000123" style="flex:1"><button type="button" class="gh sm" id="labno-auto" style="flex:0 0 auto">ออกเลขให้</button></div>
+            </div>
+            <div><label>เลขที่ฟิล์มเอกซเรย์</label><input id="l-xray_no" placeholder="เช่น X69-0991"></div>
+            <div><label>นักเทคนิคการแพทย์ผู้รายงานผล</label><input id="l-mt_name" placeholder="ทนพ. / ทนพญ. ชื่อ-สกุล"></div>
+            <div><label>เลขที่ใบประกอบวิชาชีพ (ท.น.)</label><input id="l-mt_license"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div><label>เวลาลงทะเบียน</label><input id="l-registered_at" type="time"></div>
+            <div><label>เวลาเก็บสิ่งส่งตรวจ</label><input id="l-collected_at" type="time"></div>
+            <div><label>เวลาเอกซเรย์</label><input id="l-xray_at" type="time"></div>
+            <div><label>เวลาห้องแล็บรายงานผล</label><input id="l-reported_at" type="time"></div>
+          </div>
+          <p class="hint" style="margin-top:6px">เวลาทั้งหมดคิดเป็นเวลาของวันที่ตรวจ (ตามช่อง “วันที่ตรวจ” ด้านบน) — ไทม์ไลน์นี้คือสิ่งที่ลูกค้าเห็นว่าเราตรวจจริง</p>
         </fieldset>
         <fieldset class="only-alien"><legend>ผลการตรวจ</legend><div id="tests" class="row"></div>
           <div class="row" style="margin-top:8px"><div><label>ผลตรวจอื่นๆ (ถ้ามี)</label><input id="f-other_results"></div></div>
@@ -280,11 +298,15 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
           <div style="flex:0 0 auto"><button type="submit" id="save">บันทึก</button></div>
           <div style="flex:0 0 auto"><button type="button" class="gh" id="cancel">ล้างฟอร์ม</button></div>
           <div style="flex:0 0 auto"><button type="button" class="gh hide" id="printone">พิมพ์ใบนี้</button></div>
-          <div style="flex:0 0 auto"><button type="button" class="gh hide" id="confirmbtn">ยืนยันข้อมูลถูกต้อง</button></div>
+          <div style="flex:0 0 auto"><button type="button" class="gh hide" id="labbtn">รับรองผลแล็บ (ทนพ.)</button></div>
+          <div style="flex:0 0 auto"><button type="button" class="gh hide" id="confirmbtn">แพทย์รับรองผล</button></div>
+          <div style="flex:0 0 auto"><button type="button" class="gh hide" id="sealbtn">ผนึกผล (ออกรหัสตรวจสอบ)</button></div>
           <div style="flex:0 0 auto"><button type="button" class="dg hide" id="voidbtn">ยกเลิกใบรับรอง</button></div>
           <div style="flex:1"></div>
         </div>
         <div class="hint" id="confirminfo"></div>
+        <div class="hint" id="labinfo"></div>
+        <div class="hint" id="sealinfo"></div>
         <div class="err" id="eerr"></div><div class="okmsg" id="eok"></div>
       </form>
     </div>
@@ -433,7 +455,7 @@ function loadList(){
     .then(function(rows){
       ROWS = rows || []; drawList(); drawStats();
       var ids = [];
-      ROWS.forEach(function(c){ if(c.created_by) ids.push(c.created_by); if(c.confirmed_by) ids.push(c.confirmed_by); });
+      ROWS.forEach(function(c){ if(c.created_by) ids.push(c.created_by); if(c.confirmed_by) ids.push(c.confirmed_by); if(c.lab_verified_by) ids.push(c.lab_verified_by); });
       ensureStaffEmails(ids).then(function(){ drawList(); });
     })
     .catch(function(e){ $('tb').innerHTML = '<tr><td colspan="11" style="color:var(--bad);padding:22px">'+esc(e.message)+'</td></tr>'; });
@@ -458,9 +480,12 @@ function drawList(){
   if(!rs.length){ $('tb').innerHTML = '<tr><td colspan="11" style="color:var(--mu);padding:22px">ไม่พบข้อมูล</td></tr>'; return; }
   $('tb').innerHTML = rs.map(function(c){
     var s = stateOf(c);
-    var confirmPill = c.confirmed_at
-      ? '<span class="pill p-ok" title="ยืนยันโดย '+esc(STAFF[c.confirmed_by]||'—')+'">✓ ยืนยันแล้ว</span>'
-      : '<span class="pill p-wn">รอยืนยัน</span>';
+    var step = function(on, label, tip){
+      return '<span class="pill '+(on?'p-ok':'p-wn')+'" title="'+esc(tip||'')+'" style="margin-right:3px">'+(on?'✓ ':'')+label+'</span>';
+    };
+    var confirmPill = step(c.lab_verified_at, 'แล็บ', c.lab_verified_by ? 'รับรองผลแล็บโดย '+(STAFF[c.lab_verified_by]||'—') : 'ยังไม่มีผู้รับรองผลแล็บ')
+      + step(c.confirmed_at, 'แพทย์', c.confirmed_by ? 'แพทย์รับรองโดย '+(STAFF[c.confirmed_by]||'—') : 'แพทย์ยังไม่รับรอง')
+      + step(c.seal, 'ผนึก', c.seal ? 'รหัสผนึก '+String(c.seal).slice(0,10) : 'ยังไม่ได้ผนึกผล');
     var issuedBy = c.created_by ? (STAFF[c.created_by] || '…') : '—';
     return '<tr>'
       + '<td><input type="checkbox" class="sel" data-hn="'+esc(c.hn)+'" style="width:auto"></td>'
@@ -513,7 +538,11 @@ $('exportxlsx').addEventListener('click', function(){
       'สัญชาติ': c.nationality, 'แบบฟอร์ม': FORM_LABEL_FULL[c.form_type]||c.form_type,
       'นายจ้าง': c.employer_name||'', 'วันที่ตรวจ': c.exam_date,
       'วันหมดอายุ': addDays(c.exam_date, c.valid_days||90), 'สถานะ': s[1],
-      'ยืนยันแล้ว': c.confirmed_at ? 'ใช่' : 'ไม่', 'ผู้ออกใบ': STAFF[c.created_by]||''
+      'แพทย์รับรอง': c.confirmed_at ? 'ใช่' : 'ไม่',
+      'ผลแล็บรับรอง': c.lab_verified_at ? 'ใช่' : 'ไม่',
+      'Lab No.': (c.lab && c.lab.lab_no) || '',
+      'รหัสผนึกผล': c.seal ? String(c.seal).slice(0,10) : '',
+      'ผู้ออกใบ': STAFF[c.created_by]||''
     };
   });
   var wb = XLSX.utils.book_new();
@@ -588,6 +617,20 @@ function applyFormType(){
     Array.prototype.forEach.call(document.querySelectorAll('.'+cls), function(x){ x.classList.toggle('hide', show.indexOf(cls) < 0); });
   });
 }
+/* ข้อมูลห้องปฏิบัติการ — เก็บรวมในคอลัมน์ lab (jsonb) */
+var LABF = ['lab_no','xray_no','mt_name','mt_license'];
+var LABT = ['registered_at','collected_at','xray_at','reported_at'];
+function tzTime(iso){
+  if(!iso) return '';
+  var d = new Date(iso); if(isNaN(d)) return '';
+  try { return d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Asia/Bangkok'}); }
+  catch(e){ return ''; }
+}
+function mkTs(dateIso, hhmm){
+  if(!dateIso || !hhmm) return null;
+  return dateIso + 'T' + hhmm + ':00+07:00';   /* เวลาไทย */
+}
+
 var FIELDS = ['patient_name','doc_no','dob','age','birth_city','country','nationality','occupation',
   'employer_name','employer_addr','exam_date','valid_days','height','weight','skin_color',
   'general_condition','doctor_name','doctor_license','other_results','photo_path'];
@@ -672,6 +715,9 @@ function resetForm(){
   $('f-form_type').value='alien_worker'; $('x-exam_place').value='โรงพยาบาลดับเบิ้ลยู เมดิคอล'; applyFormType();
   $('printone').classList.add('hide'); $('voidbtn').classList.add('hide'); $('confirmbtn').classList.add('hide');
   $('f-photo_path').value=''; setPhotoPreview(''); $('photo-status').textContent=''; $('confirminfo').textContent='';
+  LABF.concat(LABT).forEach(function(f){ var el=$('l-'+f); if(el) el.value=''; });
+  $('labinfo').textContent=''; $('sealinfo').textContent='';
+  $('labbtn').classList.add('hide'); $('sealbtn').classList.add('hide');
   $('eerr').textContent=''; $('eok').textContent='';
 }
 $('cancel').addEventListener('click', resetForm);
@@ -697,15 +743,17 @@ function editCert(hn){
   Array.prototype.forEach.call(document.querySelectorAll('.dis'), function(x){
     x.checked = (c.summary_diseases||[]).indexOf(x.value) >= 0;
   });
+  var LB = c.lab || {};
+  LABF.forEach(function(f){ var el=$('l-'+f); if(el) el.value = LB[f] || ''; });
+  LABT.forEach(function(f){ var el=$('l-'+f); if(el) el.value = tzTime(LB[f]); });
   setPhotoPreview(c.photo_path); $('photo-status').textContent='';
   $('printone').classList.remove('hide');
   $('voidbtn').classList.remove('hide');
   $('voidbtn').textContent = c.status === 'void' ? 'นำกลับมาใช้งาน' : 'ยกเลิกใบรับรอง';
   $('confirmbtn').classList.remove('hide');
-  $('confirmbtn').textContent = c.confirmed_at ? 'ยกเลิกการยืนยัน' : 'ยืนยันข้อมูลถูกต้อง';
-  $('confirminfo').textContent = c.confirmed_at
-    ? 'ยืนยันโดย ' + (STAFF[c.confirmed_by] || '…') + ' เมื่อ ' + new Date(c.confirmed_at).toLocaleString('th-TH')
-    : 'ยังไม่มีผู้ยืนยันข้อมูลชุดนี้ — หน้าตรวจสอบสาธารณะจะแสดงว่า “ยังไม่ได้รับการยืนยัน”';
+  $('labbtn').classList.remove('hide');
+  $('sealbtn').classList.remove('hide');
+  drawSignoff(c);
   $('eerr').textContent=''; $('eok').textContent='';
 }
 
@@ -729,6 +777,11 @@ function collect(){
   o.form_type = $('f-form_type').value;
   var X = {}; XF.forEach(function(f){ var el=$('x-'+f); if(el && el.value.trim()!=='') X[f]=el.value.trim(); });
   o.extra = X;
+  var L = {}, keep = (EDIT && EDIT.lab) || {};
+  if(keep.methods) L.methods = keep.methods;              /* วิธีตรวจรายใบ (ถ้าเคยตั้งไว้) */
+  LABF.forEach(function(f){ var el=$('l-'+f); if(el && el.value.trim()!=='') L[f]=el.value.trim(); });
+  LABT.forEach(function(f){ var el=$('l-'+f); if(el && el.value){ var ts = mkTs(o.exam_date, el.value); if(ts) L[f]=ts; } });
+  o.lab = L;
   return o;
 }
 
@@ -744,8 +797,15 @@ $('ef').addEventListener('submit', function(e){
     var c = r && r[0];
     $('eok').textContent = id ? 'บันทึกการแก้ไขแล้ว' : 'สร้างใบรับรองแล้ว — HN ' + (c && c.hn);
     loadList(); loadAudit();
-    if(!id && c){ EDIT = c; $('f-id').value = c.id; $('eh').textContent='แก้ไขใบรับรองแพทย์ — HN '+c.hn;
+    if(!id && c){ $('f-id').value = c.id; $('eh').textContent='แก้ไขใบรับรองแพทย์ — HN '+c.hn;
+      $('f-hn').value = c.hn; $('f-hn').disabled = true;
       $('printone').classList.remove('hide'); $('voidbtn').classList.remove('hide'); }
+    if(c){
+      $('labbtn').classList.remove('hide'); $('confirmbtn').classList.remove('hide'); $('sealbtn').classList.remove('hide');
+      var lost = id && EDIT && (EDIT.confirmed_at || EDIT.lab_verified_at) && !c.confirmed_at && !c.lab_verified_at;
+      drawSignoff(c);
+      if(lost) $('eok').textContent = 'บันทึกการแก้ไขแล้ว — ผลตรวจ/ข้อมูลแล็บเปลี่ยน ระบบจึงล้างการรับรองทั้งหมด กรุณาให้ ทนพ. และแพทย์รับรองใหม่';
+    }
   }).catch(function(err){
     $('eerr').textContent = /duplicate|unique/i.test(err.message)
       ? 'เลขที่ใบรับรองนี้ถูกใช้ไปแล้ว กรุณาใช้เลขอื่น หรือเว้นว่างให้ระบบรันอัตโนมัติ'
@@ -769,21 +829,78 @@ $('voidbtn').addEventListener('click', function(){
     .catch(function(err){ $('eerr').textContent = err.message; });
 });
 
-$('confirmbtn').addEventListener('click', function(){
-  var id = $('f-id').value; if(!id) return;
-  var c = ROWS.filter(function(x){ return x.id===id; })[0];
-  var toConfirm = !(c && c.confirmed_at);
-  var body = toConfirm ? { confirmed_by: ME && ME.id, confirmed_at: new Date().toISOString() } : { confirmed_by: null, confirmed_at: null };
-  api('/rest/v1/certificates?id=eq.'+id, {method:'PATCH', body: JSON.stringify(body), prefer:'return=representation'})
+/* ---------- การรับรอง 3 ขั้น: ทนพ. → แพทย์ → ผนึกผล ---------- */
+function drawSignoff(c){
+  EDIT = c;
+  var L = c.lab || {};
+  $('labbtn').textContent  = c.lab_verified_at ? 'ยกเลิกการรับรองผลแล็บ' : 'รับรองผลแล็บ (ทนพ.)';
+  $('confirmbtn').textContent = c.confirmed_at ? 'ยกเลิกการรับรองของแพทย์' : 'แพทย์รับรองผล';
+  $('labinfo').textContent = c.lab_verified_at
+    ? '① ผลแล็บรับรองแล้วโดย ' + (STAFF[c.lab_verified_by] || '…')
+      + (L.mt_name ? ' — ลงชื่อบนใบว่า ' + L.mt_name : '')
+      + ' เมื่อ ' + new Date(c.lab_verified_at).toLocaleString('th-TH')
+    : '① ยังไม่มีนักเทคนิคการแพทย์รับรองผลแล็บ';
+  $('confirminfo').textContent = c.confirmed_at
+    ? '② แพทย์รับรองผลแล้ว (บัญชี ' + (STAFF[c.confirmed_by] || '…') + ') เมื่อ ' + new Date(c.confirmed_at).toLocaleString('th-TH')
+      + ' — ลายเซ็นแพทย์จะขึ้นบนใบพิมพ์เมื่อขั้นนี้ผ่านแล้วเท่านั้น'
+    : '② แพทย์ยังไม่รับรองผล — ใบที่พิมพ์ออกมาจะยังไม่มีลายเซ็นแพทย์';
+  var warn = (c.lab_verified_by && c.confirmed_by && c.lab_verified_by === c.confirmed_by)
+    ? '  ⚠ ขั้น ① และ ② ใช้บัญชีเดียวกัน — ควรเปิดบัญชีให้นักเทคนิคการแพทย์แยกต่างหาก' : '';
+  $('sealinfo').textContent = c.seal
+    ? '③ ผนึกผลแล้ว — รหัส ' + String(c.seal).slice(0,10) + ' เมื่อ ' + new Date(c.sealed_at).toLocaleString('th-TH')
+      + ' (ถ้าแก้ผลตรวจหลังจากนี้ การรับรองทั้งหมดจะหลุดและต้องรับรองใหม่)' + warn
+    : '③ ยังไม่ได้ผนึกผล — ต้องผ่านขั้น ① และ ② ก่อน' + warn;
+}
+function patchCert(body, okMsg){
+  var id = $('f-id').value;
+  if(!id) return Promise.reject(new Error('กรุณาบันทึกใบรับรองก่อน'));
+  return api('/rest/v1/certificates?id=eq.'+id, {method:'PATCH', body: JSON.stringify(body), prefer:'return=representation'})
     .then(function(r){
-      $('eok').textContent = toConfirm ? 'ยืนยันข้อมูลถูกต้องแล้ว' : 'ยกเลิกการยืนยันแล้ว';
-      $('confirmbtn').textContent = toConfirm ? 'ยกเลิกการยืนยัน' : 'ยืนยันข้อมูลถูกต้อง';
-      $('confirminfo').textContent = toConfirm
-        ? 'ยืนยันโดย ' + ((ME && ME.email) || '…') + ' เมื่อ ' + new Date().toLocaleString('th-TH')
-        : 'ยังไม่มีผู้ยืนยันข้อมูลชุดนี้ — หน้าตรวจสอบสาธารณะจะแสดงว่า “ยังไม่ได้รับการยืนยัน”';
+      var c = r && r[0];
+      if(c){ drawSignoff(c); }
+      $('eok').textContent = okMsg; $('eerr').textContent='';
       loadList(); loadAudit();
-    })
+      return c;
+    });
+}
+$('labbtn').addEventListener('click', function(){
+  var c = EDIT || {};
+  var on = !c.lab_verified_at;
+  if(on && !($('l-mt_name').value.trim())){
+    if(!confirm('ยังไม่ได้กรอกชื่อนักเทคนิคการแพทย์ผู้รายงานผล — ใบพิมพ์จะไม่มีลายเซ็นผู้รายงานผลแล็บ ต้องการรับรองต่อไปหรือไม่?')) return;
+  }
+  var body = on ? { lab_verified_by: ME && ME.id, lab_verified_at: new Date().toISOString() }
+                : { lab_verified_by: null, lab_verified_at: null };
+  patchCert(body, on ? 'รับรองผลแล็บแล้ว' : 'ยกเลิกการรับรองผลแล็บแล้ว')
+    .then(function(c){ if(c && on && c.confirmed_at) doSeal(true); })
     .catch(function(err){ $('eerr').textContent = err.message; });
+});
+$('confirmbtn').addEventListener('click', function(){
+  var c = EDIT || {};
+  var on = !c.confirmed_at;
+  var body = on ? { confirmed_by: ME && ME.id, confirmed_at: new Date().toISOString() }
+                : { confirmed_by: null, confirmed_at: null };
+  patchCert(body, on ? 'แพทย์รับรองผลแล้ว' : 'ยกเลิกการรับรองของแพทย์แล้ว')
+    .then(function(c2){ if(c2 && on && c2.lab_verified_at) doSeal(true); })
+    .catch(function(err){ $('eerr').textContent = err.message; });
+});
+function doSeal(quiet){
+  var id = $('f-id').value; if(!id) return;
+  api('/rest/v1/rpc/seal_certificate', {method:'POST', body: JSON.stringify({p_id: id})})
+    .then(function(res){
+      $('eok').textContent = 'ผนึกผลแล้ว — รหัสตรวจสอบ ' + (res && res.short ? res.short : '');
+      return api('/rest/v1/certificates?id=eq.'+id+'&select=*').then(function(r){ if(r && r[0]) drawSignoff(r[0]); loadList(); });
+    })
+    .catch(function(err){ if(!quiet) $('eerr').textContent = err.message; else $('sealinfo').textContent = '③ ยังผนึกไม่ได้: ' + err.message; });
+}
+$('sealbtn').addEventListener('click', function(){ doSeal(false); });
+
+/* ออกเลข Lab No. อัตโนมัติจากระบบ (แล็บในโรงพยาบาลเอง) */
+$('labno-auto').addEventListener('click', function(){
+  if($('l-lab_no').value.trim() && !confirm('ช่องเลขที่สิ่งส่งตรวจมีค่าอยู่แล้ว ต้องการออกเลขใหม่ทับหรือไม่?')) return;
+  api('/rest/v1/rpc/next_lab_no', {method:'POST', body: '{}'})
+    .then(function(v){ $('l-lab_no').value = (typeof v === 'string') ? v : (v && v.next_lab_no) || ''; })
+    .catch(function(err){ $('eerr').textContent = 'ออกเลขอัตโนมัติไม่สำเร็จ: ' + err.message + ' (กรอกเลขเองได้)'; });
 });
 
 /* ---------- import ---------- */

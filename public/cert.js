@@ -12,6 +12,17 @@ var TESTS = [
 ];
 var VAL_COL = { normal:0, no:0, abnormal:1, yes:1, severe:2 };
 
+/* วิธีตรวจมาตรฐานของแต่ละรายการ — แก้รายใบได้ที่ lab.methods ในหน้า admin */
+var LAB_METHODS = {
+  tb:        'เอกซเรย์ทรวงอก (CXR)',
+  leprosy:   'ตรวจร่างกายโดยแพทย์',
+  filaria:   'ตรวจร่างกายโดยแพทย์',
+  syphilis:  'ตรวจเลือด (RPR/VDRL)',
+  drugs:     'ตรวจปัสสาวะ (Immunoassay)',
+  alcohol:   'ซักประวัติ/ตรวจร่างกายโดยแพทย์',
+  pregnancy: 'ตรวจปัสสาวะ (Urine hCG)'
+};
+
 var HOSP = {
   nameTh:'โรงพยาบาล ดับเบิ้ลยู เมดิคอล',
   license:'10201000265',
@@ -23,12 +34,120 @@ var HOSP = {
 function esc(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"]/g,function(x){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[x]}); }
 function photoUrl(path){ return path ? ((typeof CFG!=='undefined'?CFG.url:'') + '/storage/v1/object/public/' + path) : ''; }
 function photoBox(c){ return c.photo_path ? '<img class="cphoto" src="'+esc(photoUrl(c.photo_path))+'" alt="รูปถ่ายผู้ตรวจ">' : ''; }
-function confirmBadge(c){
-  if(c.confirmed_at){
-    var who = c.confirmed_by_email ? ' ('+esc(c.confirmed_by_email)+')' : '';
-    return '<div class="confirmbadge ok">&#10003; ยืนยันข้อมูลโดยเจ้าหน้าที่'+who+' เมื่อ '+thDate(c.confirmed_at)+'</div>';
+/* ---------- ผลแล็บตรวจสอบได้: ไทม์ไลน์ + ข้อมูลห้องปฏิบัติการ + รหัสผนึกผล ---------- */
+function labOf(c){ return (c && c.lab) || {}; }
+function hasLab(c){
+  var L = labOf(c);
+  return !!(L.lab_no || L.reported_at || L.mt_name || L.collected_at || L.xray_no);
+}
+function thTime(iso){
+  if(!iso) return '';
+  var d = new Date(iso);
+  if(isNaN(d)) return '';
+  try { return d.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Bangkok'}) + ' น.'; }
+  catch(e){ return d.toISOString().slice(11,16) + ' น.'; }
+}
+function thDateTime(iso){
+  if(!iso) return '—';
+  var d = new Date(iso);
+  if(isNaN(d)) return thDate(iso);
+  var ymd;
+  try { ymd = d.toLocaleDateString('en-CA', {timeZone:'Asia/Bangkok'}); }
+  catch(e){ ymd = d.toISOString().slice(0,10); }
+  return thDate(ymd) + ' ' + thTime(iso);
+}
+function sealShort(c){ return c && c.seal ? String(c.seal).slice(0,10).toUpperCase() : ''; }
+function methodOf(c, key){
+  var m = labOf(c).methods || {};
+  return m[key] || LAB_METHODS[key] || '';
+}
+/* รายการที่ตรวจจริง พร้อมวิธีตรวจกำกับ */
+function testedList(c){
+  var R = c.results || {};
+  var done = TESTS.filter(function(t){ return R[t[0]] !== undefined && R[t[0]] !== null && R[t[0]] !== ''; });
+  if(!done.length) return '';
+  return '<div class="tested"><b>รายการที่ตรวจจริง ' + done.length + ' รายการ</b> '
+    + done.map(function(t){
+        var m = methodOf(c, t[0]);
+        return esc(t[1].replace('ผลการตรวจ','')) + (m ? ' <i>(' + esc(m) + ')</i>' : '');
+      }).join(' · ')
+    + '</div>';
+}
+/* บล็อกข้อมูลห้องปฏิบัติการบนใบพิมพ์ — ไม่มีข้อมูลแล็บ = ไม่แสดงอะไรเลย */
+function labBlock(c){
+  if(!hasLab(c)) return testedList(c);
+  var L = labOf(c);
+  var row = function(k, v){ return v ? '<span class="k">' + k + '</span><span class="v2">' + esc(v) + '</span>' : ''; };
+  var mt = L.mt_name ? L.mt_name + (L.mt_license ? ' (ท.น. ' + L.mt_license + ')' : '') : '';
+  return '<div class="labbox">'
+    + '<div class="labhd">ผลตรวจทางห้องปฏิบัติการ · ตรวจที่ห้องปฏิบัติการของ' + esc(HOSP.nameTh) + '</div>'
+    + '<div class="labgrid">'
+    +   row('เลขที่สิ่งส่งตรวจ (Lab No.)', L.lab_no)
+    +   row('เลขที่ฟิล์มเอกซเรย์', L.xray_no)
+    +   row('เก็บสิ่งส่งตรวจ', thDateTime(L.collected_at))
+    +   row('รายงานผล', thDateTime(L.reported_at))
+    +   row('ผู้รายงานผล', mt)
+    + '</div>'
+    + testedList(c)
+    + (c.seal
+        ? '<div class="sealline">รหัสผนึกผล <b>' + esc(sealShort(c)) + '</b>'
+          + (c.sealed_at ? ' · ผนึกเมื่อ ' + thDateTime(c.sealed_at) : '')
+          + ' · สแกน QR มุมขวาบนเพื่อตรวจสอบว่าผลไม่ถูกแก้ย้อนหลัง</div>'
+        : '')
+    + '</div>';
+}
+/* ไทม์ไลน์การตรวจ — ใช้บนหน้าตรวจสอบของลูกค้า */
+function timelineHtml(c){
+  var L = labOf(c);
+  var ev = [
+    [L.registered_at, 'ลงทะเบียน / ยืนยันตัวผู้รับการตรวจ', c.photo_path ? 'มีรูปถ่ายขณะเข้ารับการตรวจ' : ''],
+    [L.collected_at,  'เก็บสิ่งส่งตรวจ (เลือด / ปัสสาวะ)', L.lab_no ? 'Lab No. ' + L.lab_no : ''],
+    [L.xray_at,       'เอกซเรย์ทรวงอก', L.xray_no ? 'ฟิล์มเลขที่ ' + L.xray_no : ''],
+    [L.reported_at,   'ห้องปฏิบัติการรายงานผล',
+        (L.mt_name ? 'ผู้รายงานผล ' + L.mt_name + (L.mt_license ? ' (ท.น. ' + L.mt_license + ')' : '') : '')],
+    [c.lab_verified_at, 'นักเทคนิคการแพทย์รับรองผลแล็บ', ''],
+    [c.confirmed_at,  'แพทย์รับรองผลการตรวจ', c.doctor_name ? c.doctor_name + ' (' + c.doctor_license + ')' : ''],
+    [c.sealed_at,     'ผนึกผลตรวจ (ออกรหัสตรวจสอบ)', c.seal ? 'รหัส ' + sealShort(c) : '']
+  ].filter(function(e){ return e[0]; });
+  if(!ev.length) return '';
+  return '<div class="tl"><h3>ไทม์ไลน์การตรวจจริง</h3>'
+    + ev.map(function(e){
+        return '<div class="tlrow"><span class="t">' + esc(thTime(e[0]) || thDate(e[0])) + '</span>'
+          + '<span class="d"><b>' + esc(e[1]) + '</b>' + (e[2] ? '<small>' + esc(e[2]) + '</small>' : '') + '</span></div>';
+      }).join('')
+    + '</div>';
+}
+/* แผงหลักฐานบนหน้าตรวจสอบของลูกค้า (QR) */
+function evidencePanel(c){
+  var tl = timelineHtml(c);
+  var seal = '';
+  if(c.seal){
+    seal = c.seal_ok === false
+      ? '<div class="seal bad"><b>⚠ ข้อมูลผลตรวจไม่ตรงกับรหัสผนึก</b><small>ผลตรวจชุดนี้ถูกแก้ไขหลังการผนึก กรุณาติดต่อโรงพยาบาลเพื่อขอใบฉบับล่าสุด</small></div>'
+      : '<div class="seal ok"><b>✓ ผลตรวจตรงกับรหัสผนึก ' + esc(sealShort(c)) + '</b><small>ผนึกเมื่อ ' + esc(thDateTime(c.sealed_at))
+        + (c.seal_revision > 1 ? ' · ผนึกครั้งที่ ' + c.seal_revision + ' (มีการแก้ไขและรับรองใหม่)' : '')
+        + ' — ไม่มีการแก้ไขข้อมูลย้อนหลัง</small></div>';
   }
-  return '<div class="confirmbadge wait">ข้อมูลชุดนี้ยังไม่ได้รับการยืนยันจากเจ้าหน้าที่ — กรุณาตรวจสอบกับโรงพยาบาลโดยตรงหากมีข้อสงสัย</div>';
+  if(!tl && !seal) return '';
+  return '<div class="evid">' + seal + tl + '</div>';
+}
+function confirmBadge(c){
+  var L = labOf(c);
+  var parts = [];
+  if(c.lab_verified_at){
+    parts.push('ผลแล็บรับรองโดย ' + esc(L.mt_name || 'นักเทคนิคการแพทย์')
+      + (L.mt_license ? ' (ท.น. ' + esc(L.mt_license) + ')' : '') + ' ' + thDate(c.lab_verified_at));
+  }
+  if(c.confirmed_at){
+    parts.push('แพทย์รับรองผลโดย ' + esc(c.doctor_name) + ' (' + esc(c.doctor_license) + ') ' + thDate(c.confirmed_at));
+  }
+  if(c.seal){
+    parts.push('รหัสผนึกผล ' + esc(sealShort(c)));
+  }
+  if(parts.length){
+    return '<div class="confirmbadge ok">&#10003; ' + parts.join(' · ') + '</div>';
+  }
+  return '<div class="confirmbadge wait">ข้อมูลชุดนี้ยังไม่ได้รับการรับรองในระบบ — กรุณาตรวจสอบกับโรงพยาบาลโดยตรงหากมีข้อสงสัย</div>';
 }
 function thDate(iso){ if(!iso) return '—'; var a=String(iso).slice(0,10).split('-').map(Number); return a[2]+' '+TH_M[a[1]-1]+' '+(a[0]+543); }
 function ddmmyyyy(iso){ if(!iso) return ''; var a=String(iso).slice(0,10).split('-'); return a[2]+'-'+a[1]+'-'+a[0]; }
@@ -36,9 +155,12 @@ function addDays(iso,n){ var t=new Date(String(iso).slice(0,10)+'T00:00:00Z'); t
 function today(){ return new Date().toISOString().slice(0,10); }
 function daysLeft(c){ return Math.round((new Date(addDays(c.exam_date, c.valid_days||90)+'T00:00:00Z') - new Date(today()+'T00:00:00Z'))/86400000); }
 
+/* ลายเซ็นแพทย์จะขึ้นก็ต่อเมื่อแพทย์กด "รับรองผล" ในระบบแล้วเท่านั้น
+   (ต้องการให้ขึ้นทุกใบเหมือนเดิม: ลบเงื่อนไข signed ออกจากบรรทัด if) */
 function sigImg(c){
   var n = String((c && c.doctor_name) || '');
-  if(n.indexOf('มานิตย์') >= 0 && n.indexOf('จารุวรรณ') >= 0){
+  var signed = !!(c && c.confirmed_at);
+  if(signed && n.indexOf('มานิตย์') >= 0 && n.indexOf('จารุวรรณ') >= 0){
     return '<img class="sig" src="/sign.png" alt="">';
   }
   return '<span class="sig"></span>';
@@ -49,6 +171,27 @@ function certStatus(c){
   if(n < 0) return {cls:'bad', ic:'&#10005;', head:'ใบรับรองหมดอายุแล้ว', sub:'หมดอายุเมื่อ '+thDate(exp)+' ('+(-n)+' วันที่ผ่านมา)'};
   if(n <= 14) return {cls:'wn', ic:'!', head:'ใบรับรองใกล้หมดอายุ', sub:'เหลืออีก '+n+' วัน · หมดอายุ '+thDate(exp)};
   return {cls:'ok', ic:'&#10003;', head:'ใบรับรองถูกต้อง · ยังไม่หมดอายุ', sub:'เหลืออีก '+n+' วัน · หมดอายุ '+thDate(exp)};
+}
+
+/* ลายเซ็นท้ายใบ: มีผลแล็บ = ลงนาม 2 ชั้น (ผู้รายงานผลแล็บ + แพทย์) */
+function signRow(c){
+  var L = labOf(c);
+  var doc = '<div class="sign"><div class="role">แพทย์ผู้ตรวจ</div>'+sigImg(c)
+    + '<div class="line">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div></div>';
+  if(!L.mt_name) return doc;
+  return '<div class="signs">'
+    + '<div class="sign"><div class="role">ผู้รายงานผลห้องปฏิบัติการ</div><span class="sig"></span>'
+    + '<div class="line">('+esc(L.mt_name)+(L.mt_license?' (ท.น. '+esc(L.mt_license)+')':'')+')</div></div>'
+    + doc + '</div>';
+}
+
+/* มุมขวาบน: QR + คำบอกว่าสแกนไปทำอะไร + เลขที่ใบ + รูปถ่ายผู้ตรวจ */
+function qrCorner(c, opts){
+  opts = opts || {};
+  var qr = opts.qrId
+    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="qrcap">สแกนตรวจสอบว่าเป็นใบจริง<br>และดูผลแล็บที่ตรวจจริง</div>'
+    : '';
+  return qr + '<div class="hn">เลขที่ใบ '+esc(c.hn)+'</div>' + photoBox(c);
 }
 
 /* opts.qrId = element id to mount a QR into (print view); opts.qrUrl = url to encode */
@@ -75,15 +218,13 @@ function renderCert(c, opts){
   var s2 = c.summary==='treat'   ? '&#10003;' : '';
   var s3 = c.summary==='fail'    ? '&#10003;' : '';
 
-  var corner = opts.qrId
-    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c)
-    : '<div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c);
+  var corner = qrCorner(c, opts);
 
   return ''
   + '<div class="sheet">'
   + '<div class="hdr"><div class="lg"><img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล"></div>'
   + '<div class="info">'+esc(HOSP.nameTh)+' ใบอนุญาตให้ดำเนินการสถานพยาบาลเลขที่ '+esc(HOSP.license)+'<br>ที่อยู่ '+esc(HOSP.addr)+'<br>โทร. '+esc(HOSP.tel)+'</div>'
-  + '<div class="qrcol">เลขที่บัตรสถานพยาบาล'+corner+'</div></div>'
+  + '<div class="qrcol">'+corner+'</div></div>'
   + '<h1>ใบรับรองแพทย์</h1>'
   + '<div class="subrow"><div class="sub">การตรวจสุขภาพคนต่างด้าว/แรงงานต่างด้าว</div><div class="date">วันที่ '+thDate(c.exam_date)+'</div></div>'
   + '<div class="sec">๑. รายละเอียด/ประวัติส่วนตัวของผู้รับการตรวจสุขภาพ</div>'
@@ -101,6 +242,7 @@ function renderCert(c, opts){
   + '<div class="fld"><span class="lb">สภาพร่างกาย จิตใจทั่วไป</span><span class="v">'+esc(c.general_condition)+'</span></div>'
   + '<table>'+rows+'</table>'
   + '<div class="fld"><span class="lb">ผลตรวจอื่นๆ (ถ้ามี)</span><span class="v">'+(c.other_results?esc(c.other_results):'–')+'</span></div>'
+  + labBlock(c)
   + '<div class="ctr">สรุปผลการตรวจ</div>'
   + '<div class="sum"><ol>'
   + '<li><span class="n">1)</span><span class="bx">'+s1+'</span> สุขภาพสมบูรณ์ดี</li>'
@@ -110,8 +252,8 @@ function renderCert(c, opts){
   + '<li class="ind">3.1 ร่างกายทุพพลภาพจึงไม่สามารถประกอบการหาเลี้ยงชีพได้ / จิตฟั่นเฟือน ไม่สมประกอบ</li>'
   + '<li class="ind">3.2 เป็นโรคไม่อนุญาตให้ทำงาน และไม่ให้การประกันสุขภาพ (ตามประกาศกระทรวงสาธารณสุขฯ)</li>'
   + '</ol></div>'
-  + '<div class="sign"><div class="role">แพทย์ผู้ตรวจ</div>'+sigImg(c)+'<div class="line">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div></div>'
-  + '<div class="note">( ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||90)+' วัน นับแต่วันที่ตรวจร่างกาย )</div>'
+  + signRow(c)
+  + '<div class="note">( ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||90)+' วัน นับแต่วันที่ตรวจร่างกาย — ใช้ได้ถึงวันที่ '+thDate(addDays(c.exam_date, c.valid_days||90))+' )</div>'
   + confirmBadge(c)
   + '</div>';
 }
@@ -151,7 +293,33 @@ var CERT_CSS = ''
 + '.sign{margin-top:22px;text-align:center}.sign .role{font-weight:600}'
 + '.sign .line{margin:2px auto 0;width:260px;border-top:1px dotted #666;padding-top:3px;font-weight:600}'
 + '.sign .sig{display:block;height:44px;margin:6px auto -8px}'
-+ '.note{text-align:center;font-size:12px;margin-top:14px}';
++ '.note{text-align:center;font-size:12px;margin-top:14px}'
++ '.qrcap{font-size:9.5px;font-weight:600;line-height:1.35;color:#12428f;margin-top:1px}'
++ '.signs{display:flex;gap:18px;justify-content:space-around;align-items:flex-start}'
++ '.signs .sign{flex:1}'
++ '.labbox{margin-top:10px;border:1px solid #9bb0cd;border-radius:7px;padding:7px 10px;font-size:11.5px;line-height:1.55;background:#f7fafe}'
++ '.labhd{font-weight:700;color:#0b2f68;margin-bottom:3px;font-size:12px}'
++ '.labgrid{display:flex;flex-wrap:wrap;gap:1px 14px}'
++ '.labgrid .k{color:#4a5a72}.labgrid .v2{font-weight:700;margin-left:4px}'
++ '.labgrid .k:after{content:""}'
++ '.tested{margin-top:3px;padding-top:3px;border-top:1px dotted #9bb0cd}'
++ '.tested i{font-style:normal;color:#4a5a72}'
++ '.sealline{margin-top:3px;padding-top:3px;border-top:1px dotted #9bb0cd;letter-spacing:.2px}'
++ '.sealline b{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;letter-spacing:1.2px}'
+/* แผงหลักฐานบนหน้าตรวจสอบของลูกค้า (ไม่ใช้ตอนพิมพ์) */
++ '.evid{width:860px;margin:10px auto 0;background:#fff;border-radius:12px;padding:18px 22px;box-shadow:0 4px 20px rgba(0,0,0,.25);font-size:13.5px}'
++ '.evid .seal{border-radius:9px;padding:10px 14px;margin-bottom:14px}'
++ '.evid .seal b{display:block;font-size:14.5px}'
++ '.evid .seal small{display:block;margin-top:2px;line-height:1.6}'
++ '.evid .seal.ok{background:#e7f6ee;color:#0b5c3a}'
++ '.evid .seal.bad{background:#fdecec;color:#8f1b1b}'
++ '.evid h3{font-size:14.5px;color:#0b2f68;margin:0 0 8px}'
++ '.tlrow{display:flex;gap:12px;padding:7px 0;border-left:2px solid #d7e0ee;margin-left:6px;padding-left:14px;position:relative}'
++ '.tlrow:before{content:"";position:absolute;left:-6px;top:13px;width:9px;height:9px;border-radius:50%;background:#12428f}'
++ '.tlrow .t{flex:0 0 78px;font-weight:700;color:#12428f;font-variant-numeric:tabular-nums}'
++ '.tlrow .d b{display:block;font-weight:600}'
++ '.tlrow .d small{color:#657288}'
++ '@media print{.evid{display:none}}';
 
 /* ---------- form 2: ใบรับรองแพทย์ 5 โรค ---------- */
 var CO = {
@@ -231,15 +399,11 @@ function thDay(iso){ if(!iso) return ''; return String(Number(String(iso).slice(
 function thMonth(iso){ if(!iso) return ''; return TH_M[Number(String(iso).slice(5,7))-1]; }
 function thYear(iso){ if(!iso) return ''; return String(Number(String(iso).slice(0,4))+543); }
 
-function cornerOf(c, opts){
-  return opts.qrId
-    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c)
-    : '<div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c);
-}
+function cornerOf(c, opts){ return qrCorner(c, opts); }
 function hospHeader(corner){
   return '<div class="hdr"><div class="lg"><img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล"></div>'
   + '<div class="info">'+esc(HOSP.nameTh)+' ใบอนุญาตให้ดำเนินการสถานพยาบาลเลขที่ '+esc(HOSP.license)+'<br>ที่อยู่ '+esc(HOSP.addr)+'<br>โทร. '+esc(HOSP.tel)+'</div>'
-  + '<div class="qrcol">เลขที่บัตรสถานพยาบาล'+corner+'</div></div>';
+  + '<div class="qrcol">'+corner+'</div></div>';
 }
 
 /* ---------- form 3: ใบรับรองการตรวจรักษา (ใบลาป่วย) ---------- */
