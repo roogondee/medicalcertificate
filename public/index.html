@@ -120,6 +120,7 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
       '<div class="bar '+s.cls+'"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
       + evidencePanel(c)
       + renderCert(c, {});
+    checkLabFiles(c);
   })
   .catch(function(){ fail('เชื่อมต่อระบบไม่ได้','กรุณาลองใหม่อีกครั้ง หรือติดต่อโรงพยาบาล โทร. 034-110-988'); });
 })();

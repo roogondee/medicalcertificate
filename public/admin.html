@@ -219,6 +219,15 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
             <div><label>เวลาห้องแล็บรายงานผล</label><input id="l-reported_at" type="time"></div>
           </div>
           <p class="hint" style="margin-top:6px">เวลาทั้งหมดคิดเป็นเวลาของวันที่ตรวจ (ตามช่อง “วันที่ตรวจ” ด้านบน) — ไทม์ไลน์นี้คือสิ่งที่ลูกค้าเห็นว่าเราตรวจจริง</p>
+          <div class="row" style="margin-top:10px;align-items:flex-start">
+            <div style="flex:0 0 330px">
+              <label>ไฟล์ผลตรวจจากห้องปฏิบัติการ (รูปใบรายงานผล / ฟิล์มเอกซเรย์ / PDF)</label>
+              <input type="file" id="l-file" accept="image/*,application/pdf" multiple>
+              <div class="hint" id="labfile-status" style="margin-top:4px"></div>
+            </div>
+            <div style="flex:1"><label>ไฟล์ที่แนบไว้แล้ว</label><div id="labfiles"></div></div>
+          </div>
+          <p class="hint" style="margin-top:6px">ลูกค้าที่สแกน QR จะเปิดดูและบันทึกไฟล์เหล่านี้ได้ — ระบบเก็บรหัส sha256 ของทุกไฟล์ไว้ในรหัสผนึก หน้าตรวจสอบจะคำนวณใหม่แล้วเทียบให้ลูกค้าเห็นว่าไฟล์ไม่ถูกสลับ</p>
         </fieldset>
         <fieldset class="only-alien"><legend>ผลการตรวจ</legend><div id="tests" class="row"></div>
           <div class="row" style="margin-top:8px"><div><label>ผลตรวจอื่นๆ (ถ้ามี)</label><input id="f-other_results"></div></div>
@@ -675,6 +684,89 @@ $('f-photo').addEventListener('change', function(e){
   reader.readAsDataURL(f);
 });
 
+/* ---------- ไฟล์ผลตรวจจากห้องปฏิบัติการ ---------- */
+var LABFILES = [];
+function drawLabFiles(){
+  var box = $('labfiles');
+  if(!LABFILES.length){ box.innerHTML = '<span class="hint">ยังไม่มีไฟล์แนบ</span>'; return; }
+  box.innerHTML = LABFILES.map(function(f, i){
+    return '<div style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:12.5px">'
+      + '<a href="'+esc(photoUrl(f.path))+'" target="_blank" rel="noopener" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name||f.path)+'</a>'
+      + '<span class="hint" style="flex:0 0 auto">'+esc(String(f.sha256||'').slice(0,8).toUpperCase())+'</span>'
+      + '<button type="button" class="gh sm labf-del" data-i="'+i+'" style="flex:0 0 auto">ลบ</button>'
+      + '</div>';
+  }).join('');
+  Array.prototype.forEach.call(box.querySelectorAll('.labf-del'), function(b){
+    b.addEventListener('click', function(){
+      var i = Number(b.dataset.i), f = LABFILES[i];
+      if(!confirm('ลบไฟล์ "'+(f.name||f.path)+'" ออกจากใบนี้?')) return;
+      fetch(CFG.url + '/storage/v1/object/' + f.path, {
+        method: 'DELETE', headers: { 'apikey': CFG.key, 'Authorization': 'Bearer ' + TOK }
+      }).catch(function(){});
+      LABFILES.splice(i, 1); drawLabFiles();
+      $('labfile-status').textContent = 'ลบไฟล์แล้ว — กด “บันทึก” เพื่อให้มีผลกับใบรับรอง';
+    });
+  });
+}
+function sha256Hex(blob){
+  if(!(window.crypto && crypto.subtle && blob.arrayBuffer)) return Promise.resolve('');
+  return blob.arrayBuffer()
+    .then(function(buf){ return crypto.subtle.digest('SHA-256', buf); })
+    .then(function(h){
+      return Array.prototype.map.call(new Uint8Array(h), function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
+    })
+    .catch(function(){ return ''; });
+}
+/* รูปย่อให้กว้างไม่เกิน 1600px เพื่อให้ยังอ่านผลได้ชัด แต่ไฟล์ไม่ใหญ่เกินไป */
+function shrinkImage(file){
+  return new Promise(function(resolve){
+    var img = new Image(), reader = new FileReader();
+    reader.onload = function(){
+      img.onload = function(){
+        var maxW = 1600, scale = Math.min(1, maxW / img.width);
+        if(scale === 1 && file.size < 900000) return resolve({blob: file, ext: 'jpg', type: file.type});
+        var cv = document.createElement('canvas');
+        cv.width = Math.round(img.width * scale); cv.height = Math.round(img.height * scale);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        cv.toBlob(function(b){ resolve({blob: b || file, ext: 'jpg', type: 'image/jpeg'}); }, 'image/jpeg', 0.88);
+      };
+      img.onerror = function(){ resolve({blob: file, ext: 'jpg', type: file.type}); };
+      img.src = reader.result;
+    };
+    reader.onerror = function(){ resolve({blob: file, ext: 'jpg', type: file.type}); };
+    reader.readAsDataURL(file);
+  });
+}
+function uploadLabFile(file){
+  var isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name || '');
+  var prep = isPdf ? Promise.resolve({blob: file, ext: 'pdf', type: 'application/pdf'}) : shrinkImage(file);
+  return prep.then(function(o){
+    return sha256Hex(o.blob).then(function(hex){
+      var path = 'cert-labs/' + uuid4() + '.' + o.ext;
+      return fetch(CFG.url + '/storage/v1/object/' + path, {
+        method: 'POST',
+        headers: { 'apikey': CFG.key, 'Authorization': 'Bearer ' + TOK, 'Content-Type': o.type || 'application/octet-stream' },
+        body: o.blob
+      }).then(function(r){
+        if(!r.ok) throw new Error('อัปโหลด "'+(file.name||'')+'" ไม่สำเร็จ');
+        LABFILES.push({ path: path, name: file.name || 'ผลตรวจห้องปฏิบัติการ', type: o.type, sha256: hex, at: new Date().toISOString() });
+      });
+    });
+  });
+}
+$('l-file').addEventListener('change', function(e){
+  var files = Array.prototype.slice.call(e.target.files || []);
+  if(!files.length) return;
+  $('labfile-status').textContent = 'กำลังอัปโหลด ' + files.length + ' ไฟล์…';
+  files.reduce(function(chain, f){ return chain.then(function(){ return uploadLabFile(f); }); }, Promise.resolve())
+    .then(function(){
+      drawLabFiles();
+      $('labfile-status').textContent = 'อัปโหลดแล้ว — กด “บันทึก” เพื่อผูกไฟล์เข้ากับใบรับรอง';
+    })
+    .catch(function(err){ drawLabFiles(); $('labfile-status').textContent = err.message; })
+    .then(function(){ e.target.value = ''; });
+});
+
 /* ---------- dd/mm/yyyy date fields ---------- */
 function parseDMY(v){
   if(!v) return null;
@@ -716,6 +808,7 @@ function resetForm(){
   $('printone').classList.add('hide'); $('voidbtn').classList.add('hide'); $('confirmbtn').classList.add('hide');
   $('f-photo_path').value=''; setPhotoPreview(''); $('photo-status').textContent=''; $('confirminfo').textContent='';
   LABF.concat(LABT).forEach(function(f){ var el=$('l-'+f); if(el) el.value=''; });
+  LABFILES = []; drawLabFiles(); $('labfile-status').textContent='';
   $('labinfo').textContent=''; $('sealinfo').textContent='';
   $('labbtn').classList.add('hide'); $('sealbtn').classList.add('hide');
   $('eerr').textContent=''; $('eok').textContent='';
@@ -746,6 +839,7 @@ function editCert(hn){
   var LB = c.lab || {};
   LABF.forEach(function(f){ var el=$('l-'+f); if(el) el.value = LB[f] || ''; });
   LABT.forEach(function(f){ var el=$('l-'+f); if(el) el.value = tzTime(LB[f]); });
+  LABFILES = (LB.files || []).slice(); drawLabFiles(); $('labfile-status').textContent='';
   setPhotoPreview(c.photo_path); $('photo-status').textContent='';
   $('printone').classList.remove('hide');
   $('voidbtn').classList.remove('hide');
@@ -781,6 +875,7 @@ function collect(){
   if(keep.methods) L.methods = keep.methods;              /* วิธีตรวจรายใบ (ถ้าเคยตั้งไว้) */
   LABF.forEach(function(f){ var el=$('l-'+f); if(el && el.value.trim()!=='') L[f]=el.value.trim(); });
   LABT.forEach(function(f){ var el=$('l-'+f); if(el && el.value){ var ts = mkTs(o.exam_date, el.value); if(ts) L[f]=ts; } });
+  if(LABFILES.length) L.files = LABFILES;
   o.lab = L;
   return o;
 }

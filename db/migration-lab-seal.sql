@@ -270,3 +270,27 @@ begin
   return v_result;
 end; $$;
 grant execute on function public.verify_certificate(text, text) to anon, authenticated;
+
+-- ---------------------------------------------------------------------
+-- 7) ไฟล์ผลตรวจจากห้องปฏิบัติการ (ใบรายงานผลแล็บ / ฟิล์มเอกซเรย์)
+--    เก็บไฟล์ใน storage bucket 'cert-labs' และเก็บรายการไฟล์ไว้ใน lab.files
+--    ตัวอย่าง: lab.files = [{"path":"cert-labs/<uuid>.jpg","name":"ใบรายงานผลแล็บ",
+--                            "type":"image/jpeg","sha256":"…","at":"…"}]
+--    เนื่องจาก lab อยู่ในข้อมูลที่ถูกผนึก → sha256 ของไฟล์จึงถูกผนึกไปด้วย
+--    หน้าตรวจสอบของลูกค้าจะโหลดไฟล์มาคำนวณ sha256 ใหม่แล้วเทียบให้เห็นกับตา
+--
+--    หมายเหตุความปลอดภัย: bucket นี้เป็น public read เหมือน 'cert-photos' เดิม
+--    ชื่อไฟล์เป็น uuid สุ่ม และที่อยู่ไฟล์จะถูกเปิดเผยผ่าน verify_certificate
+--    (ต้องมี HN คู่กับ token) เท่านั้น — ระดับการป้องกันเท่ากับ QR บนใบรับรอง
+-- ---------------------------------------------------------------------
+insert into storage.buckets (id, name, public) values ('cert-labs','cert-labs', true)
+  on conflict (id) do nothing;
+
+drop policy if exists "cert-labs public read"  on storage.objects;
+drop policy if exists "cert-labs staff write"  on storage.objects;
+drop policy if exists "cert-labs staff update" on storage.objects;
+drop policy if exists "cert-labs staff delete" on storage.objects;
+create policy "cert-labs public read"  on storage.objects for select using (bucket_id = 'cert-labs');
+create policy "cert-labs staff write"  on storage.objects for insert to authenticated with check (bucket_id = 'cert-labs');
+create policy "cert-labs staff update" on storage.objects for update to authenticated using (bucket_id = 'cert-labs');
+create policy "cert-labs staff delete" on storage.objects for delete to authenticated using (bucket_id = 'cert-labs');

@@ -89,6 +89,9 @@ function labBlock(c){
     +   row('ผู้รายงานผล', mt)
     + '</div>'
     + testedList(c)
+    + (labFiles(c).length
+        ? '<div class="labfilenote">แนบไฟล์ผลตรวจจากห้องปฏิบัติการ ' + labFiles(c).length + ' ไฟล์ในระบบ — สแกน QR เพื่อเปิดดูหรือบันทึกไฟล์ต้นฉบับ</div>'
+        : '')
     + (c.seal
         ? '<div class="sealline">รหัสผนึกผล <b>' + esc(sealShort(c)) + '</b>'
           + (c.sealed_at ? ' · ผนึกเมื่อ ' + thDateTime(c.sealed_at) : '')
@@ -117,9 +120,52 @@ function timelineHtml(c){
       }).join('')
     + '</div>';
 }
+/* ไฟล์ผลตรวจจากห้องปฏิบัติการ (ใบรายงานผล / ฟิล์มเอกซเรย์) */
+function labFiles(c){ var f = labOf(c).files; return (f && f.length) ? f : []; }
+function isImgFile(f){
+  return ((f.type||'').indexOf('image/') === 0) || /\.(jpe?g|png|webp|gif)$/i.test(f.path || '');
+}
+function labFilesHtml(c){
+  var fs = labFiles(c);
+  if(!fs.length) return '';
+  return '<div class="lfiles"><h3>ไฟล์ผลตรวจจากห้องปฏิบัติการ</h3>'
+    + '<div class="lfgrid">'
+    + fs.map(function(f, i){
+        var url = photoUrl(f.path);
+        return '<a class="lf" href="' + esc(url) + '" target="_blank" rel="noopener" download>'
+          + (isImgFile(f) ? '<img src="' + esc(url) + '" alt="">' : '<span class="pdf">PDF</span>')
+          + '<b>' + esc(f.name || 'ผลตรวจห้องปฏิบัติการ') + '</b>'
+          + '<small id="lfck' + i + '" class="ck">' + (f.sha256 ? 'กำลังตรวจสอบไฟล์…' : 'กดเพื่อเปิดดู / บันทึก') + '</small>'
+          + '</a>';
+      }).join('')
+    + '</div>'
+    + '<p class="lfnote">กดที่ไฟล์เพื่อเปิดดูเต็มหน้าจอหรือบันทึกลงเครื่อง'
+    + ' · ระบบจะโหลดไฟล์มาคำนวณรหัสใหม่แล้วเทียบกับรหัสที่ผนึกไว้ให้เห็นกับตา</p></div>';
+}
+/* โหลดไฟล์มาคำนวณ sha256 ใหม่ แล้วเทียบกับค่าที่ผนึกไว้ — เรียกหลังใส่ HTML ลงหน้าแล้ว */
+function checkLabFiles(c){
+  var fs = labFiles(c);
+  if(!fs.length || !(window.crypto && crypto.subtle)) return;
+  fs.forEach(function(f, i){
+    var el = document.getElementById('lfck' + i);
+    if(!el || !f.sha256) return;
+    fetch(photoUrl(f.path))
+      .then(function(r){ if(!r.ok) throw new Error('load'); return r.arrayBuffer(); })
+      .then(function(buf){ return crypto.subtle.digest('SHA-256', buf); })
+      .then(function(h){
+        var hex = Array.prototype.map.call(new Uint8Array(h), function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
+        var ok = hex.toLowerCase() === String(f.sha256).toLowerCase();
+        el.textContent = ok ? '✓ ไฟล์ตรงกับที่ผนึกไว้' : '⚠ ไฟล์ไม่ตรงกับที่ผนึกไว้';
+        el.className = 'ck ' + (ok ? 'ok' : 'bad');
+      })
+      .catch(function(){ el.textContent = 'รหัสไฟล์ ' + String(f.sha256).slice(0,8).toUpperCase(); el.className = 'ck'; });
+  });
+}
+
 /* แผงหลักฐานบนหน้าตรวจสอบของลูกค้า (QR) */
 function evidencePanel(c){
   var tl = timelineHtml(c);
+  var files = labFilesHtml(c);
   var seal = '';
   if(c.seal){
     seal = c.seal_ok === false
@@ -128,8 +174,8 @@ function evidencePanel(c){
         + (c.seal_revision > 1 ? ' · ผนึกครั้งที่ ' + c.seal_revision + ' (มีการแก้ไขและรับรองใหม่)' : '')
         + ' — ไม่มีการแก้ไขข้อมูลย้อนหลัง</small></div>';
   }
-  if(!tl && !seal) return '';
-  return '<div class="evid">' + seal + tl + '</div>';
+  if(!tl && !seal && !files) return '';
+  return '<div class="evid">' + seal + files + tl + '</div>';
 }
 function confirmBadge(c){
   var L = labOf(c);
@@ -319,6 +365,16 @@ var CERT_CSS = ''
 + '.tlrow .t{flex:0 0 78px;font-weight:700;color:#12428f;font-variant-numeric:tabular-nums}'
 + '.tlrow .d b{display:block;font-weight:600}'
 + '.tlrow .d small{color:#657288}'
++ '.labfilenote{margin-top:3px;padding-top:3px;border-top:1px dotted #9bb0cd}'
++ '.lfiles{margin-bottom:16px}'
++ '.lfgrid{display:flex;gap:12px;flex-wrap:wrap}'
++ '.lf{flex:0 0 168px;display:block;text-decoration:none;color:inherit;border:1px solid #d7e0ee;border-radius:10px;padding:8px;background:#f7fafe}'
++ '.lf img{width:100%;height:112px;object-fit:cover;border-radius:6px;display:block;background:#e7edf6}'
++ '.lf .pdf{display:grid;place-items:center;height:112px;border-radius:6px;background:#e7edf6;color:#12428f;font-weight:700;font-size:20px}'
++ '.lf b{display:block;font-size:12.5px;margin-top:6px;line-height:1.4}'
++ '.lf .ck{display:block;font-size:11.5px;color:#657288;margin-top:2px}'
++ '.lf .ck.ok{color:#0f7a4d;font-weight:600}.lf .ck.bad{color:#a11d1d;font-weight:600}'
++ '.lfnote{font-size:12px;color:#657288;margin-top:8px;line-height:1.65}'
 + '@media print{.evid{display:none}}';
 
 /* ---------- form 2: ใบรับรองแพทย์ 5 โรค ---------- */
