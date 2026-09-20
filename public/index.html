@@ -78,8 +78,14 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
     document.body.style.minWidth = '0';
     var s = certStatus(c);
     var conf = c.confirmed
-      ? '<td style="color:#0f7a4d;font-weight:600">✓ ยืนยันโดยเจ้าหน้าที่แล้ว</td>'
-      : '<td style="color:#8a5a00">ยังไม่ได้รับการยืนยันจากเจ้าหน้าที่</td>';
+      ? '<td style="color:#0f7a4d;font-weight:600">✓ แพทย์รับรองผลแล้ว</td>'
+      : '<td style="color:#8a5a00">ยังไม่ได้รับการรับรองจากแพทย์</td>';
+    var labrow = c.lab_verified
+      ? '<tr><td>ผลห้องปฏิบัติการ</td><td style="color:#0f7a4d;font-weight:600">✓ นักเทคนิคการแพทย์รับรองผลแล้ว</td></tr>'
+      : '';
+    var sealrow = c.sealed
+      ? '<tr><td>รหัสผนึกผลตรวจ</td><td style="color:#0f7a4d;font-weight:600">✓ ผนึกไว้เมื่อ '+thDate(c.sealed_at)+'</td></tr>'
+      : '';
     app.innerHTML =
       '<div class="bar '+s.cls+'" style="width:560px"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
       + '<div class="pv">'
@@ -89,7 +95,8 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
       + '<tr><td>วันที่ตรวจ</td><td>'+thDate(c.exam_date)+'</td></tr>'
       + '<tr><td>ใช้ได้ถึง</td><td>'+thDate(addDays(c.exam_date, c.valid_days||90))+'</td></tr>'
       + '<tr><td>สถานะ</td><td>'+(c.status==='void'?'<span style="color:#a11d1d;font-weight:600">ถูกยกเลิกโดยโรงพยาบาล</span>':esc(s.head))+'</td></tr>'
-      + '<tr><td>การยืนยันข้อมูล</td>'+conf+'</tr>'
+      + '<tr><td>การรับรองของแพทย์</td>'+conf+'</tr>'
+      + labrow + sealrow
       + '</table>'
       + '<div class="note">เพื่อคุ้มครองข้อมูลส่วนบุคคลของผู้รับการตรวจ หน้านี้แสดงเฉพาะผลยืนยันขั้นต้น<br>'
       + '<b>ต้องการดูใบรับรองฉบับเต็ม (ชื่อ-สกุล รูปถ่าย ผลตรวจ):</b> สแกน QR code บนใบรับรองแพทย์ฉบับจริง</div>'
@@ -111,7 +118,9 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
     var s = certStatus(c);
     app.innerHTML =
       '<div class="bar '+s.cls+'"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
+      + evidencePanel(c)
       + renderCert(c, {});
+    checkLabFiles(c);
   })
   .catch(function(){ fail('เชื่อมต่อระบบไม่ได้','กรุณาลองใหม่อีกครั้ง หรือติดต่อโรงพยาบาล โทร. 034-110-988'); });
 })();
