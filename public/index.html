@@ -37,7 +37,34 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
 .pv .again{text-align:center;margin-top:14px;font-size:13px}
 .foot{max-width:860px;margin:12px auto 0;text-align:center;color:#fff;font-size:12px;line-height:1.7;text-shadow:0 1px 2px rgba(0,0,0,.3)}
 .foot a{color:#fff}
+/* แถบแบรนด์ — พื้นขาวเพราะ logo.png ไม่มี alpha (พื้นทึบ) */
+.brand{max-width:860px;margin:0 auto 10px;background:#fff;border-radius:12px;padding:11px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:11px 13px;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.brand img{width:44px;height:auto;flex:0 0 44px}
+.brand b{display:block;font-size:15.5px;color:#12428f;line-height:1.3}
+.brand span{display:block;font-size:10.5px;color:#9aa4b4;letter-spacing:1.3px;font-weight:600}
+.brand i{display:block;font-style:normal;font-size:12px;color:#657288;margin-top:3px}
+.brand .top{flex:1 1 200px;min-width:0}
+.brand .tel{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:8px 14px;border:1.5px solid #d7e0ee;border-radius:10px;color:#12428f;text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.brand .tel:hover{background:#eef3fb;border-color:#12428f}
+/* การ์ดติดต่อ — ท้ายหน้า ไม่แย่งความเด่นจากแถบสถานะ */
+.contact{max-width:860px;margin:12px auto 0;background:#fff;border-radius:12px;padding:17px 20px;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.contact h3{font-size:14.5px;color:#12428f;margin-bottom:3px}
+.contact .sv{font-size:12.5px;color:#657288;line-height:1.7;margin-bottom:12px}
+.contact .tels{display:flex;gap:9px;flex-wrap:wrap}
+.contact .tels a{flex:1 1 210px;display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid #d7e0ee;border-radius:10px;text-decoration:none;color:#12428f}
+.contact .tels a:hover{background:#eef3fb;border-color:#12428f}
+.contact .tels .ic2{width:30px;height:30px;border-radius:50%;background:#eef3fb;display:grid;place-items:center;flex:0 0 30px;font-size:15px}
+.contact .tels b{display:block;font-size:15px;font-variant-numeric:tabular-nums;line-height:1.35}
+.contact .tels small{display:block;font-size:11px;color:#8b95a6;font-weight:400}
+.contact .addr{margin-top:11px;font-size:12.5px;color:#657288;line-height:1.7}
+.contact .addr a{color:#12428f}
 @media (max-width:640px){
+  .brand{padding:10px 13px;gap:11px}
+  .brand img{width:40px;flex:0 0 40px}
+  .brand b{font-size:14.5px}
+  .brand .tel{flex:1 1 100%;justify-content:center}
+  .contact{padding:15px 16px}
+  .contact .tels a{flex:1 1 100%}
   .home{margin-top:4vh;padding:26px 18px}
   .pv{padding:22px 18px}
   .msg{padding:32px 18px}
@@ -50,8 +77,7 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
 </head>
 <body>
 <div id="app"><div class="msg" style="color:#555"><p>กำลังตรวจสอบ…</p></div></div>
-<p class="foot">ข้อมูลนี้เป็นข้อมูลส่วนบุคคลด้านสุขภาพ คุ้มครองตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562<br>
-สอบถามเพิ่มเติม โทร. <a href="tel:034110988">034-110-988</a> · <a href="tel:0819023540">081-902-3540</a></p>
+<p class="foot">ข้อมูลนี้เป็นข้อมูลส่วนบุคคลด้านสุขภาพ คุ้มครองตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562</p>
 <script src="/config.js"></script>
 <script src="/cert.js"></script>
 <script>document.head.insertAdjacentHTML("beforeend","<style>"+CERT_CSS+"</style>");</script>
@@ -62,9 +88,39 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
   var tk = q.get('k') || '';
   var app = document.getElementById('app');
 
+  var HOSP_ADDR = '99/26 หมู่ 5 ต.บางน้ำจืด อ.เมืองสมุทรสาคร จ.สมุทรสาคร 74000';
+
+  /* narrow = จัดความกว้างให้ตรงกับการ์ดเนื้อหาของแต่ละหน้า (560px / 860px) */
+  function w(narrow){ return narrow ? ' style="max-width:560px"' : ''; }
+
+  function brandBar(narrow){
+    return '<div class="brand"'+w(narrow)+'>'
+    + '<img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล">'
+    + '<div class="top"><b>โรงพยาบาล ดับเบิ้ลยู เมดิคอล</b>'
+    +   '<span>W MEDICAL HOSPITAL</span>'
+    +   '<i>ระบบตรวจสอบใบรับรองแพทย์ออนไลน์</i></div>'
+    + '<a class="tel" href="tel:034110988">&#9742; 034-110-988</a>'
+    + '</div>';
+  }
+  function contactCard(narrow){
+    var map = 'https://www.google.com/maps/search/?api=1&query='
+      + encodeURIComponent('โรงพยาบาล ดับเบิ้ลยู เมดิคอล ' + HOSP_ADDR);
+    return '<div class="contact"'+w(narrow)+'>'
+    + '<h3>ติดต่อโรงพยาบาล</h3>'
+    + '<div class="sv">ตรวจสุขภาพแรงงานต่างด้าว · ตรวจสุขภาพก่อนเข้าทำงาน · ใบรับรองแพทย์ทุกประเภท</div>'
+    + '<div class="tels">'
+    +   '<a href="tel:034110988"><span class="ic2">&#9742;</span><span><b>034-110-988</b><small>โทรศัพท์สำนักงาน</small></span></a>'
+    +   '<a href="tel:0819023540"><span class="ic2">&#9742;</span><span><b>081-902-3540</b><small>โทรศัพท์มือถือ</small></span></a>'
+    + '</div>'
+    + '<div class="addr">' + HOSP_ADDR + ' · <a href="' + map + '" target="_blank" rel="noopener">ดูแผนที่</a></div>'
+    + '</div>';
+  }
+
   function fail(title, detail){
-    app.innerHTML = '<div class="msg"><h2>'+title+'</h2><p>'+detail+'</p></div>'
-      + '<p class="foot" style="margin-top:14px"><a href="/">← ตรวจสอบใบอื่น</a></p>';
+    app.innerHTML = brandBar()
+      + '<div class="msg"><h2>'+title+'</h2><p>'+detail+'</p></div>'
+      + '<p class="foot" style="margin-top:14px"><a href="/">← ตรวจสอบใบอื่น</a></p>'
+      + contactCard();
   }
   function home(){
     app.innerHTML = ''
@@ -75,7 +131,8 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
     +   '<form id="hf"><input id="hq" inputmode="numeric" placeholder="กรอกเลขที่ใบรับรองแพทย์ 10 หลัก" autofocus><button type="submit">ตรวจสอบ</button></form>'
     +   '<div class="hint">การกรอกเลขที่จะแสดงเฉพาะผลยืนยันขั้นต้น (ใบมีจริง/หมดอายุ/ถูกยกเลิก)<br>'
     +   'หากต้องการดูใบรับรองฉบับเต็ม กรุณาสแกน QR code บนใบรับรอง</div>'
-    + '</div>';
+    + '</div>'
+    + contactCard(true);
     document.getElementById('hf').addEventListener('submit', function(e){
       e.preventDefault();
       var v = document.getElementById('hq').value.replace(/\D/g,'');
@@ -88,7 +145,8 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
       ? '<td style="color:#0f7a4d;font-weight:600">✓ ยืนยันโดยเจ้าหน้าที่แล้ว</td>'
       : '<td style="color:#8a5a00">ยังไม่ได้รับการยืนยันจากเจ้าหน้าที่</td>';
     app.innerHTML =
-      '<div class="bar '+s.cls+'" style="max-width:560px"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
+      brandBar(true)
+      + '<div class="bar '+s.cls+'" style="max-width:560px"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
       + '<div class="pv">'
       + '<h2>✓ ใบรับรองเลขที่ '+esc(c.hn)+' มีอยู่จริงในระบบ</h2>'
       + '<table>'
@@ -101,7 +159,8 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
       + '<div class="note">เพื่อคุ้มครองข้อมูลส่วนบุคคลของผู้รับการตรวจ หน้านี้แสดงเฉพาะผลยืนยันขั้นต้น<br>'
       + '<b>ต้องการดูใบรับรองฉบับเต็ม (ชื่อ-สกุล รูปถ่าย ผลตรวจ):</b> สแกน QR code บนใบรับรองแพทย์ฉบับจริง</div>'
       + '<div class="again"><a href="/">← ตรวจสอบใบอื่น</a></div>'
-      + '</div>';
+      + '</div>'
+      + contactCard(true);
   }
   if(!hn){ return home(); }
 
@@ -116,9 +175,10 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
       'เลขที่ <b>'+esc(hn)+'</b> ไม่มีอยู่ในระบบ หรือลิงก์ไม่ถูกต้อง<br>กรุณาตรวจสอบอีกครั้ง หรือติดต่อโรงพยาบาลเพื่อยืนยัน'); }
     if(c.preview){ return preview(c); }
     var s = certStatus(c);
-    app.innerHTML =
-      '<div class="bar '+s.cls+'"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
-      + renderCert(c, {});
+    app.innerHTML = brandBar()
+      + '<div class="bar '+s.cls+'"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
+      + renderCert(c, {})
+      + contactCard();
   })
   .catch(function(){ fail('เชื่อมต่อระบบไม่ได้','กรุณาลองใหม่อีกครั้ง หรือติดต่อโรงพยาบาล โทร. 034-110-988'); });
 })();
