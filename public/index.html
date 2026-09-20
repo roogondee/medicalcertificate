@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=880">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>ใบรับรองแพทย์ | W Medical Hospital</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,16 +10,16 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padding:10px 0 40px}
-.bar{width:860px;margin:0 auto 10px;padding:11px 16px;border-radius:11px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;color:#fff}
+body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padding:10px 12px 40px}
+.bar{max-width:860px;margin:0 auto 10px;padding:11px 16px;border-radius:11px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;color:#fff}
 .bar .ic{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;flex:0 0 24px;font-size:14px}
 .bar small{display:block;font-weight:400;opacity:.9;font-size:12px}
 .ok{background:#0f7a4d}.wn{background:#8a5a00}.bad{background:#a11d1d}
 .sheet{box-shadow:0 4px 20px rgba(0,0,0,.25)}
-.msg{width:860px;margin:0 auto;background:#fff;border-radius:12px;padding:46px 24px;text-align:center}
+.msg{max-width:860px;margin:0 auto;background:#fff;border-radius:12px;padding:46px 24px;text-align:center}
 .msg h2{color:#a11d1d;font-size:18px;margin-bottom:8px}
 .msg p{font-size:14px;color:#555}
-.home{width:560px;margin:8vh auto 0;background:#fff;border-radius:16px;padding:36px 34px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.home{max-width:560px;margin:8vh auto 0;background:#fff;border-radius:16px;padding:36px 34px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 .home img{width:74px;margin-bottom:12px}
 .home h1{font-size:20px;color:#12428f;margin-bottom:4px}
 .home p.s{font-size:13.5px;color:#657288;margin-bottom:20px}
@@ -28,15 +28,24 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
 .home input:focus{outline:0;border-color:#12428f}
 .home button{padding:11px 22px;border:0;border-radius:10px;background:#12428f;color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
 .home .hint{font-size:12px;color:#98a2b5;margin-top:16px;line-height:1.7}
-.pv{width:560px;margin:0 auto;background:#fff;border-radius:16px;padding:30px 34px;box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.pv{max-width:560px;margin:0 auto;background:#fff;border-radius:16px;padding:30px 34px;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 .pv h2{color:#0f7a4d;font-size:18px;margin-bottom:14px;text-align:center}
 .pv table{width:100%;border-collapse:collapse;font-size:14px}
 .pv td{padding:7px 4px;border-bottom:1px solid #f1f4f8}
 .pv td:first-child{color:#657288;width:42%}
 .pv .note{background:#eef3fb;border-radius:10px;padding:12px 16px;font-size:12.5px;color:#0b2f68;margin-top:16px;line-height:1.7}
 .pv .again{text-align:center;margin-top:14px;font-size:13px}
-.foot{width:860px;margin:12px auto 0;text-align:center;color:#fff;font-size:12px;line-height:1.7;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.foot{max-width:860px;margin:12px auto 0;text-align:center;color:#fff;font-size:12px;line-height:1.7;text-shadow:0 1px 2px rgba(0,0,0,.3)}
 .foot a{color:#fff}
+@media (max-width:640px){
+  .home{margin-top:4vh;padding:26px 18px}
+  .pv{padding:22px 18px}
+  .msg{padding:32px 18px}
+  .pv td:first-child{width:46%}
+}
+@media (max-width:420px){
+  .home form{flex-direction:column}
+}
 </style>
 </head>
 <body>
@@ -58,7 +67,6 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
       + '<p class="foot" style="margin-top:14px"><a href="/">← ตรวจสอบใบอื่น</a></p>';
   }
   function home(){
-    document.body.style.minWidth = '0';
     app.innerHTML = ''
     + '<div class="home">'
     +   '<img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล">'
@@ -75,13 +83,12 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
     });
   }
   function preview(c){
-    document.body.style.minWidth = '0';
     var s = certStatus(c);
     var conf = c.confirmed
       ? '<td style="color:#0f7a4d;font-weight:600">✓ ยืนยันโดยเจ้าหน้าที่แล้ว</td>'
       : '<td style="color:#8a5a00">ยังไม่ได้รับการยืนยันจากเจ้าหน้าที่</td>';
     app.innerHTML =
-      '<div class="bar '+s.cls+'" style="width:560px"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
+      '<div class="bar '+s.cls+'" style="max-width:560px"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
       + '<div class="pv">'
       + '<h2>✓ ใบรับรองเลขที่ '+esc(c.hn)+' มีอยู่จริงในระบบ</h2>'
       + '<table>'
