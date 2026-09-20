@@ -102,9 +102,14 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
     + '<a class="tel" href="tel:034110988">&#9742; 034-110-988</a>'
     + '</div>';
   }
+  /* พิกัดสำนักงานใหญ่ 99/26 หมู่ 5 ต.บางน้ำจืด (ที่อยู่เดียวกับบนใบรับรอง)
+     ใช้รูปแบบ Google Maps URLs API ที่ปักหมุดตามพิกัดตรงๆ
+     แทนการค้นหาด้วยข้อความซึ่งอาจไปโผล่สาขาอื่นหรือที่ผิด */
+  var HOSP_GEO = '13.6286116,100.3551941';
+
   function contactCard(narrow){
     var map = 'https://www.google.com/maps/search/?api=1&query='
-      + encodeURIComponent('โรงพยาบาล ดับเบิ้ลยู เมดิคอล ' + HOSP_ADDR);
+      + encodeURIComponent(HOSP_GEO);
     return '<div class="contact"'+w(narrow)+'>'
     + '<h3>ติดต่อโรงพยาบาล</h3>'
     + '<div class="sv">ตรวจสุขภาพแรงงานต่างด้าว · ตรวจสุขภาพก่อนเข้าทำงาน · ใบรับรองแพทย์ทุกประเภท</div>'
