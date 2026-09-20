@@ -36,6 +36,14 @@ function photoUrl(path){ return path ? ((typeof CFG!=='undefined'?CFG.url:'') + 
 function photoBox(c){ return c.photo_path ? '<img class="cphoto" src="'+esc(photoUrl(c.photo_path))+'" alt="รูปถ่ายผู้ตรวจ">' : ''; }
 /* ---------- ผลแล็บตรวจสอบได้: ไทม์ไลน์ + ข้อมูลห้องปฏิบัติการ + รหัสผนึกผล ---------- */
 function labOf(c){ return (c && c.lab) || {}; }
+/* เจ้าหน้าที่มักพิมพ์ "ท.น.12345" ลงช่องเลขใบประกอบวิชาชีพ ทั้งที่ใบพิมพ์เติม "ท.น." ให้อยู่แล้ว
+   ตัดคำนำหน้าที่ซ้ำออก เพื่อไม่ให้ขึ้นเป็น "ท.น. ท.น.12345" */
+function mtLic(L){
+  var v = L && L.mt_license ? String(L.mt_license).trim() : '';
+  if(!v) return '';
+  v = v.replace(/^\s*ท\s*\.?\s*น\s*\.?\s*/, '').trim();
+  return v ? ' (ท.น. ' + v + ')' : '';
+}
 function hasLab(c){
   var L = labOf(c);
   return !!(L.lab_no || L.reported_at || L.mt_name || L.collected_at || L.xray_no);
@@ -78,7 +86,7 @@ function labBlock(c){
   if(!hasLab(c)) return testedList(c);
   var L = labOf(c);
   var row = function(k, v){ return v ? '<span class="k">' + k + '</span><span class="v2">' + esc(v) + '</span>' : ''; };
-  var mt = L.mt_name ? L.mt_name + (L.mt_license ? ' (ท.น. ' + L.mt_license + ')' : '') : '';
+  var mt = L.mt_name ? L.mt_name + mtLic(L) : '';
   return '<div class="labbox">'
     + '<div class="labhd">ผลตรวจทางห้องปฏิบัติการ · ตรวจที่ห้องปฏิบัติการของ' + esc(HOSP.nameTh) + '</div>'
     + '<div class="labgrid">'
@@ -107,7 +115,7 @@ function timelineHtml(c){
     [L.collected_at,  'เก็บสิ่งส่งตรวจ (เลือด / ปัสสาวะ)', L.lab_no ? 'Lab No. ' + L.lab_no : ''],
     [L.xray_at,       'เอกซเรย์ทรวงอก', L.xray_no ? 'ฟิล์มเลขที่ ' + L.xray_no : ''],
     [L.reported_at,   'ห้องปฏิบัติการรายงานผล',
-        (L.mt_name ? 'ผู้รายงานผล ' + L.mt_name + (L.mt_license ? ' (ท.น. ' + L.mt_license + ')' : '') : '')],
+        (L.mt_name ? 'ผู้รายงานผล ' + L.mt_name + mtLic(L) : '')],
     [c.lab_verified_at, 'นักเทคนิคการแพทย์รับรองผลแล็บ', ''],
     [c.confirmed_at,  'แพทย์รับรองผลการตรวจ', c.doctor_name ? c.doctor_name + ' (' + c.doctor_license + ')' : ''],
     [c.sealed_at,     'ผนึกผลตรวจ (ออกรหัสตรวจสอบ)', c.seal ? 'รหัส ' + sealShort(c) : '']
@@ -182,7 +190,7 @@ function confirmBadge(c){
   var parts = [];
   if(c.lab_verified_at){
     parts.push('ผลแล็บรับรองโดย ' + esc(L.mt_name || 'นักเทคนิคการแพทย์')
-      + (L.mt_license ? ' (ท.น. ' + esc(L.mt_license) + ')' : '') + ' ' + thDate(c.lab_verified_at));
+      + esc(mtLic(L)) + ' ' + thDate(c.lab_verified_at));
   }
   if(c.confirmed_at){
     parts.push('แพทย์รับรองผลโดย ' + esc(c.doctor_name) + ' (' + esc(c.doctor_license) + ') ' + thDate(c.confirmed_at));
@@ -227,7 +235,7 @@ function signRow(c){
   if(!L.mt_name) return doc;
   return '<div class="signs">'
     + '<div class="sign"><div class="role">ผู้รายงานผลห้องปฏิบัติการ</div><span class="sig"></span>'
-    + '<div class="line">('+esc(L.mt_name)+(L.mt_license?' (ท.น. '+esc(L.mt_license)+')':'')+')</div></div>'
+    + '<div class="line">('+esc(L.mt_name)+esc(mtLic(L))+')</div></div>'
     + doc + '</div>';
 }
 
