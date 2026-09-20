@@ -24,6 +24,13 @@ td{padding:8px 10px;border-bottom:1px solid #eef2f7;vertical-align:top}
 td.n{text-align:right;white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums}
 tr.sum td{background:#eef3fb;font-weight:700;border-bottom:0;font-size:14px;color:#0b2f68}
 .fill{display:inline-block;min-width:54px;border-bottom:1.6px dashed #a11d1d;color:#a11d1d;text-align:center}
+td .cd{display:block;font-size:11px;color:#8794a6;margin-top:1px}
+td.n .inc{font-weight:400;font-size:11.5px;color:#5b6879;white-space:normal}
+tr.cap td{background:#0b2f68;color:#fff;font-weight:700;font-size:14px;border-bottom:0}
+tr.cap td.n{color:#fff}
+.gap{margin-top:14px;border:2px solid #a11d1d;border-radius:12px;padding:13px 16px;font-size:13.5px;line-height:1.8;color:#7d1414;background:#fffafa}
+.gap b{display:block;font-size:15px;color:#a11d1d;margin-bottom:3px}
+.gap .num{font-weight:700;font-variant-numeric:tabular-nums}
 .inc{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
 .inc div{flex:1 1 30%;background:#f7fafe;border:1px solid #d7e0ee;border-radius:9px;padding:10px 12px;font-size:12.5px;line-height:1.6}
 .inc b{display:block;color:#12428f;font-size:13px;margin-bottom:2px}
@@ -55,8 +62,8 @@ tr.sum td{background:#eef3fb;font-weight:700;border-bottom:0;font-size:14px;colo
 
   <div class="lead">
     ราคาค่าตรวจสุขภาพไม่ใช่ค่าเอกสาร แต่เป็นค่าตรวจจริงทีละรายการ
-    ด้านล่างคือรายการทั้งหมดที่เราตรวจให้ และค่าใช้จ่ายของแต่ละรายการ
-    เพื่อให้ท่านเปรียบเทียบได้ว่าราคาที่ท่านจ่าย ได้อะไรกลับไปบ้าง
+    ด้านล่างคือรายการทั้งหมดที่ต้องตรวจ พร้อม<b>ราคากลางของทางราชการ</b>กำกับทุกรายการ
+    เพื่อให้ท่านคำนวณเองได้ว่าค่าตรวจที่แท้จริงอยู่ที่เท่าไร และราคาที่ท่านจ่าย ได้อะไรกลับไปบ้าง
   </div>
 
   <h2>อัตราค่าตรวจสุขภาพที่ทางราชการกำหนด</h2>
@@ -72,15 +79,25 @@ tr.sum td{background:#eef3fb;font-weight:700;border-bottom:0;font-size:14px;colo
     การตรวจเลือด และการตรวจปัสสาวะทางห้องปฏิบัติการ — ไม่ใช่ค่าออกเอกสารเพียงอย่างเดียว
   </p>
 
-  <h2>500 บาทนั้น ไปอยู่ที่ไหนบ้าง</h2>
+  <h2>500 บาทนั้น ไปอยู่ที่ไหนบ้าง — เทียบกับราคากลางของทางราชการ</h2>
   <table>
     <thead><tr><th style="width:38%">รายการตรวจ</th><th style="width:42%">วิธีตรวจ</th><th style="width:20%;text-align:right">ค่าตรวจ (บาท)</th></tr></thead>
     <tbody id="rows"></tbody>
   </table>
   <p style="font-size:12px;color:#5b6879;margin-top:7px;line-height:1.7">
-    ใบรับรองแพทย์มีอายุ 90 วันนับแต่วันที่ตรวจร่างกาย ·
-    อัตราค่าตรวจและค่าประกันสุขภาพเป็นไปตามประกาศของทางราชการที่ใช้บังคับอยู่ในขณะนั้น
+    ตัวเลขในคอลัมน์ขวาคือ <b>ราคากลาง</b> ตามอัตราค่าบริการสาธารณสุขเพื่อใช้สำหรับการเบิกจ่าย
+    ค่ารักษาพยาบาลในสถานพยาบาลของทางราชการ (คอลัมน์กรมบัญชีกลาง) — ตัวเลขในวงเล็บคือรหัสรายการ
+    ที่ใช้ตรวจสอบย้อนกลับได้ · ใบรับรองแพทย์มีอายุ 90 วันนับแต่วันที่ตรวจร่างกาย
   </p>
+
+  <div class="gap">
+    <b>ทำไมราคาที่ถูกกว่านี้มากจึงเป็นไปได้ยาก</b>
+    เฉพาะสามรายการที่ต้องเข้าห้องปฏิบัติการและห้องเอกซเรย์ — เอกซเรย์ทรวงอก ตรวจเลือดซิฟิลิส
+    และตรวจปัสสาวะหาสารเสพติด — ราคากลางรวมกันก็ <span class="num">320 บาท</span> แล้ว
+    ยังไม่นับค่าตรวจการตั้งครรภ์ ค่าแพทย์ และค่าฟิล์ม
+    ถ้ามีที่ใดเสนอราคาต่ำกว่านี้มาก แปลว่ามีบางรายการไม่ได้ถูกตรวจจริง
+    หรือไม่ได้ผ่านห้องปฏิบัติการตามที่ระบุไว้บนใบรับรอง
+  </div>
 
   <h2>ราคานี้รวมอะไรบ้าง</h2>
   <div class="inc">
@@ -108,52 +125,69 @@ tr.sum td{background:#eef3fb;font-weight:700;border-bottom:0;font-size:14px;colo
 
 <script>
 /* ────────────────────────────────────────────────────────────────
-   แก้ราคาที่นี่ที่เดียว — ใส่ตัวเลขค่าตรวจจริงของโรงพยาบาลแทน null
-   ช่องที่ยังเป็น null จะขึ้นเป็นเส้นประสีแดงบนหน้า และจะมีกล่องเตือน
-   (เฉพาะบนจอ ไม่พิมพ์ออกกระดาษ) บอกว่ายังเหลือกี่ช่อง
-   ตัวอย่าง:  { name:'วัณโรคปอด', how:'เอกซเรย์ทรวงอก (CXR)', baht:150 }
+   ราคากลาง = อัตราค่าบริการสาธารณสุขเพื่อใช้สำหรับการเบิกจ่ายค่ารักษาพยาบาล
+   ในสถานพยาบาลของทางราชการ (คอลัมน์กรมบัญชีกลาง) — code คือรหัสรายการ
+
+   ถ้าจะเปลี่ยนไปใช้ราคาที่โรงพยาบาลเรียกเก็บจริงแทน ให้แก้ตัวเลข baht
+   ตรงนี้ที่เดียว แล้วแก้คำว่า "ราคากลาง" ที่หัวตารางกับเชิงอรรถด้านบนด้วย
+   inc:true = ไม่คิดค่าบริการแยก เพราะรวมอยู่ในค่าบริการตรวจของแพทย์แล้ว
+   baht:null = ยังไม่ได้กรอก จะขึ้นเส้นประแดงพร้อมกล่องเตือน (ไม่พิมพ์ลงกระดาษ)
    ──────────────────────────────────────────────────────────────── */
 var ITEMS = [
-  { name:'วัณโรคปอด',                          how:'เอกซเรย์ทรวงอก (CXR) พร้อมแพทย์อ่านฟิล์ม',                    baht:null },
-  { name:'ซิฟิลิส',                             how:'เจาะเลือดส่งห้องปฏิบัติการ (RPR / VDRL)',                      baht:null },
-  { name:'สารเสพติด',                           how:'ตรวจปัสสาวะ (Immunoassay)',                                   baht:null },
-  { name:'การตั้งครรภ์',                        how:'ตรวจปัสสาวะ (Urine hCG)',                                     baht:null },
-  { name:'โรคเรื้อน / โรคเท้าช้าง',             how:'ตรวจร่างกายโดยแพทย์',                                          baht:null },
-  { name:'โรคพิษสุราเรื้อรัง',                  how:'ซักประวัติและตรวจร่างกายโดยแพทย์',                             baht:null },
-  { name:'ค่าแพทย์ตรวจร่างกายและออกใบรับรอง',   how:'แพทย์ผู้มีใบอนุญาตประกอบวิชาชีพเวชกรรมเป็นผู้รับรองผล',        baht:null }
+  { name:'วัณโรคปอด',        how:'เอกซเรย์ทรวงอก (CXR) พร้อมแพทย์อ่านฟิล์ม',
+    ref:'ภาพถ่ายเอ็กซเรย์ทั่วไป', code:'41001', baht:170 },
+  { name:'ซิฟิลิส',           how:'เจาะเลือดส่งห้องปฏิบัติการ (RPR / VDRL)',
+    ref:'VDRL (RPR)',            code:'36003', baht:50 },
+  { name:'สารเสพติด',         how:'ตรวจปัสสาวะ (Immunoassay)',
+    ref:'Urine Methamphetamine',  code:'33708', baht:100 },
+  { name:'การตั้งครรภ์',      how:'ตรวจปัสสาวะ (Urine hCG)',
+    ref:'Pregnancy test',        code:'31101', baht:70 },
+  { name:'โรคเรื้อน / โรคเท้าช้าง', how:'ตรวจร่างกายโดยแพทย์',
+    ref:'', code:'', inc:true },
+  { name:'โรคพิษสุราเรื้อรัง', how:'ซักประวัติและตรวจร่างกายโดยแพทย์',
+    ref:'', code:'', inc:true },
+  { name:'ค่าแพทย์ตรวจร่างกายและออกใบรับรอง',
+    how:'แพทย์ผู้มีใบอนุญาตประกอบวิชาชีพเวชกรรมเป็นผู้รับรองผล',
+    ref:'ค่าบริการผู้ป่วยนอก ในเวลาราชการ', code:'55020', baht:50 }
 ];
 
-/* ยอดรวมที่เรียกเก็บจริงต่อคน (บาท) — ปล่อย null ไว้เพื่อใช้อัตรา 500 บาทของทางราชการ */
-var TOTAL = 500;
+/* อัตราที่ทางราชการกำหนดให้เรียกเก็บต่อคน (บาท) */
+var CAP = 500;
 
 (function(){
-  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
-  function money(v){
-    if(v === null || v === undefined || v === '') return '<span class="fill">&nbsp;</span>';
-    return Number(v).toLocaleString('th-TH');
-  }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function baht(v){ return Number(v).toLocaleString('th-TH'); }
 
-  var html = '', blank = 0;
+  var html = '', sum = 0, blank = 0;
+
   ITEMS.forEach(function(it){
-    if(it.baht === null || it.baht === undefined) blank++;
-    html += '<tr><td>'+esc(it.name)+'</td><td>'+esc(it.how)+'</td>'
-          + '<td class="n">'+money(it.baht)+'</td></tr>';
+    var cell;
+    if(it.inc){
+      cell = '<span class="inc">รวมในค่าบริการตรวจ</span>';
+    } else if(it.baht === null || it.baht === undefined){
+      cell = '<span class="fill">&nbsp;</span>'; blank++;
+    } else {
+      cell = baht(it.baht); sum += Number(it.baht);
+    }
+    var ref = it.ref ? '<span class="cd">' + esc(it.ref)
+                     + (it.code ? ' · รหัส ' + esc(it.code) : '') + '</span>' : '';
+    html += '<tr><td>' + esc(it.name) + '</td>'
+          + '<td>' + esc(it.how) + ref + '</td>'
+          + '<td class="n">' + cell + '</td></tr>';
   });
 
-  var sum = TOTAL;
-  if(sum === null && blank === 0){
-    sum = ITEMS.reduce(function(a,it){ return a + Number(it.baht); }, 0);
-  }
-  html += '<tr class="sum"><td colspan="2">รวมค่าตรวจสุขภาพต่อคน</td>'
-        + '<td class="n">'+money(sum)+'</td></tr>';
+  html += '<tr class="sum"><td colspan="2">รวมราคากลางของทางราชการ</td>'
+        + '<td class="n">' + (blank ? '<span class="fill">&nbsp;</span>' : baht(sum)) + '</td></tr>'
+        + '<tr class="cap"><td colspan="2">อัตราที่ทางราชการกำหนดให้เรียกเก็บ ต่อคน</td>'
+        + '<td class="n">' + baht(CAP) + '</td></tr>';
+
   document.getElementById('rows').innerHTML = html;
 
   if(blank){
     var t = document.getElementById('todo');
-    t.innerHTML = '<b>⚠ ยังเหลือค่าตรวจ '+blank+' รายการที่ยังไม่ได้กรอกตัวเลขจริง</b>'
+    t.innerHTML = '<b>&#9888; ยังเหลือค่าตรวจ ' + blank + ' รายการที่ยังไม่ได้กรอกตัวเลข</b>'
       + 'เปิดไฟล์ <code>public/m/price.html</code> แล้วใส่ตัวเลขแทน <code>null</code> ในตาราง '
-      + '<code>ITEMS</code> ท้ายไฟล์ — ต้องเป็นค่าตรวจจริงของโรงพยาบาลเท่านั้น '
-      + 'ถ้าตัวเลขผิดแม้ช่องเดียว ความน่าเชื่อถือของเอกสารทั้งฉบับจะเสียทันที '
+      + '<code>ITEMS</code> ท้ายไฟล์ '
       + '(กล่องเตือนนี้ไม่ถูกพิมพ์ลงกระดาษ และจะหายไปเองเมื่อกรอกครบ)';
     t.hidden = false;
   }
