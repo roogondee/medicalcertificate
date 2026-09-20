@@ -305,7 +305,7 @@ function renderCert(c, opts){
 }
 
 var CERT_CSS = ''
-+ '.sheet{width:860px;margin:0 auto;background:#fff;padding:26px 30px 22px;font-size:13.5px;line-height:1.5;color:#000}'
++ '.sheet{width:100%;max-width:860px;margin:0 auto;background:#fff;padding:26px 30px 22px;font-size:13.5px;line-height:1.5;color:#000}'
 + '.sheet *{box-sizing:border-box}'
 + '.hdr{display:flex;gap:12px;align-items:flex-start}'
 + '.hdr .lg{flex:0 0 62px;text-align:center}'
@@ -353,7 +353,7 @@ var CERT_CSS = ''
 + '.sealline{margin-top:3px;padding-top:3px;border-top:1px dotted #9bb0cd;letter-spacing:.2px}'
 + '.sealline b{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;letter-spacing:1.2px}'
 /* แผงหลักฐานบนหน้าตรวจสอบของลูกค้า (ไม่ใช้ตอนพิมพ์) */
-+ '.evid{width:860px;margin:10px auto 0;background:#fff;border-radius:12px;padding:18px 22px;box-shadow:0 4px 20px rgba(0,0,0,.25);font-size:13.5px}'
++ '.evid{width:100%;max-width:860px;margin:10px auto 0;background:#fff;border-radius:12px;padding:18px 22px;box-shadow:0 4px 20px rgba(0,0,0,.25);font-size:13.5px}'
 + '.evid .seal{border-radius:9px;padding:10px 14px;margin-bottom:14px}'
 + '.evid .seal b{display:block;font-size:14.5px}'
 + '.evid .seal small{display:block;margin-top:2px;line-height:1.6}'
@@ -581,3 +581,56 @@ CERT_CSS += ''
 + '.fsign .sig{display:block;height:44px;margin:6px 90px -10px auto}'
 + '.fsign .nm{font-weight:700;width:230px;margin-left:auto;text-align:center}'
 + '.rem{font-size:12px;margin-top:14px;line-height:1.6}.rem .pad{display:inline-block;padding-left:52px}';
+
+/* ---------- จอเล็ก (มือถือ/แท็บเล็ต) — ใช้เฉพาะบนหน้าจอ ไม่แตะการพิมพ์ A4 ---------- */
+CERT_CSS += ''
++ '@media screen and (max-width:900px){'
++   '.sheet{padding:18px 14px 16px;font-size:14px}'
+/* หัวกระดาษ: โลโก้ + ข้อมูล รพ. + คอลัมน์ QR/รูป ให้ห่อบรรทัดได้ */
++   '.hdr,.fhdr{flex-wrap:wrap;gap:8px}'
++   '.hdr .lg,.fhdr .lg{flex:0 0 46px}'
++   '.hdr .lg img,.fhdr .lg img{width:44px}'
++   '.hdr .info{flex:1 1 60%;font-size:12px}'
++   '.fhdr .co{flex:1 1 60%;font-size:12px}'
++   '.hdr .qrcol,.five .qrcol{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;font-size:11px}'
++   '.hdr .hn{margin-top:0}'
++   '.cphoto{margin:0}'
+/* วันที่เคยลอยทับหัวเรื่องเพราะ position:absolute */
++   '.subrow{flex-wrap:wrap;justify-content:center}'
++   '.date{position:static;width:100%;text-align:center;margin-top:2px}'
+/* ช่องกรอกแบบเส้นประ */
++   '.fld{margin-left:0}'
++   '.v{min-width:90px}'
++   '.dot.fill{min-width:100%}'
++   '.w180,.w220,.w260{min-width:110px}'
++   '.nid i{width:15px;height:19px;line-height:18px;margin:0}'
+/* ตารางผลตรวจ 4 คอลัมน์ล้นจอ -> เรียงเป็นบล็อกทีละรายการ */
++   '.sheet table{display:block;font-size:13.5px}'
++   '.sheet tbody,.sheet tr{display:block;width:100%}'
++   '.sheet tr{padding:6px 0;border-bottom:1px solid #eef1f5}'
++   '.sheet tr:last-child{border-bottom:0}'
++   '.sheet td{display:block;padding:0}'
++   '.sheet tr td:first-child{font-weight:600;margin-bottom:2px}'
++   'td.o{display:inline-block;width:auto;text-align:left;padding:0 14px 0 0}'
+/* รายการ/ย่อหน้าที่เยื้องลึกเกินไปสำหรับจอแคบ */
++   '.sum .ind{margin-left:24px}'
++   '.dis{margin-left:24px}'
++   '.five p.l.i{margin-left:12px}'
++   '.five5{margin-left:22px}'
++   '.snlist{columns:1;margin-left:20px}'
++   '.bilist{margin-left:20px}'
++   '.bilist li .en{margin-left:0}'
++   '.rem .pad{padding-left:0}'
+/* ลายเซ็น */
++   '.sign .line{width:auto;max-width:260px}'
++   '.fsign{margin:14px 0 0}'
++   '.fsign .sig{margin-right:40px}'
++   '.fsign .line,.fsign .nm{width:100%;max-width:230px}'
+/* พาเนลหลักฐานผลแล็บ */
++   '.evid{padding:15px 16px}'
++   '.tlrow{flex-wrap:wrap;gap:2px 12px;padding-left:12px}'
++   '.tlrow .t{flex:0 0 100%}'
++   '.lfgrid{gap:10px}'
++   '.lf{flex:1 1 100%}'
++   '.lf img,.lf .pdf{height:150px}'
++ '}';
