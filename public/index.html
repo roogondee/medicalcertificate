@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=880">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>ใบรับรองแพทย์ | W Medical Hospital</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,16 +10,16 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padding:10px 0 40px}
-.bar{width:860px;margin:0 auto 10px;padding:11px 16px;border-radius:11px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;color:#fff}
+body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padding:10px 12px 40px}
+.bar{max-width:860px;margin:0 auto 10px;padding:11px 16px;border-radius:11px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;color:#fff}
 .bar .ic{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;flex:0 0 24px;font-size:14px}
 .bar small{display:block;font-weight:400;opacity:.9;font-size:12px}
 .ok{background:#0f7a4d}.wn{background:#8a5a00}.bad{background:#a11d1d}
 .sheet{box-shadow:0 4px 20px rgba(0,0,0,.25)}
-.msg{width:860px;margin:0 auto;background:#fff;border-radius:12px;padding:46px 24px;text-align:center}
+.msg{max-width:860px;margin:0 auto;background:#fff;border-radius:12px;padding:46px 24px;text-align:center}
 .msg h2{color:#a11d1d;font-size:18px;margin-bottom:8px}
 .msg p{font-size:14px;color:#555}
-.home{width:560px;margin:8vh auto 0;background:#fff;border-radius:16px;padding:36px 34px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.home{max-width:560px;margin:8vh auto 0;background:#fff;border-radius:16px;padding:36px 34px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 .home img{width:74px;margin-bottom:12px}
 .home h1{font-size:20px;color:#12428f;margin-bottom:4px}
 .home p.s{font-size:13.5px;color:#657288;margin-bottom:20px}
@@ -28,27 +28,67 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
 .home input:focus{outline:0;border-color:#12428f}
 .home button{padding:11px 22px;border:0;border-radius:10px;background:#12428f;color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
 .home .hint{font-size:12px;color:#98a2b5;margin-top:16px;line-height:1.7}
-.pv{width:560px;margin:0 auto;background:#fff;border-radius:16px;padding:30px 34px;box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.pv{max-width:560px;margin:0 auto;background:#fff;border-radius:16px;padding:30px 34px;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 .pv h2{color:#0f7a4d;font-size:18px;margin-bottom:14px;text-align:center}
 .pv table{width:100%;border-collapse:collapse;font-size:14px}
 .pv td{padding:7px 4px;border-bottom:1px solid #f1f4f8}
 .pv td:first-child{color:#657288;width:42%}
 .pv .note{background:#eef3fb;border-radius:10px;padding:12px 16px;font-size:12.5px;color:#0b2f68;margin-top:16px;line-height:1.7}
 .pv .again{text-align:center;margin-top:14px;font-size:13px}
-.foot{width:860px;margin:12px auto 0;text-align:center;color:#fff;font-size:12px;line-height:1.7;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.foot{max-width:860px;margin:12px auto 0;text-align:center;color:#fff;font-size:12px;line-height:1.7;text-shadow:0 1px 2px rgba(0,0,0,.3)}
 .foot a{color:#fff}
+/* แถบแบรนด์ — พื้นขาวเพราะ logo.png ไม่มี alpha (พื้นทึบ) */
+.brand{max-width:860px;margin:0 auto 10px;background:#fff;border-radius:12px;padding:11px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:11px 13px;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.brand img{width:44px;height:auto;flex:0 0 44px}
+.brand b{display:block;font-size:15.5px;color:#12428f;line-height:1.3}
+.brand span{display:block;font-size:10.5px;color:#9aa4b4;letter-spacing:1.3px;font-weight:600}
+.brand i{display:block;font-style:normal;font-size:12px;color:#657288;margin-top:3px}
+.brand .top{flex:1 1 200px;min-width:0}
+.brand .tel{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:8px 14px;border:1.5px solid #d7e0ee;border-radius:10px;color:#12428f;text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.brand .tel:hover{background:#eef3fb;border-color:#12428f}
+/* การ์ดติดต่อ — ท้ายหน้า ไม่แย่งความเด่นจากแถบสถานะ */
+.contact{max-width:860px;margin:12px auto 0;background:#fff;border-radius:12px;padding:17px 20px;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.contact h3{font-size:14.5px;color:#12428f;margin-bottom:3px}
+.contact .sv{font-size:12.5px;color:#657288;line-height:1.7;margin-bottom:12px}
+.contact .tels{display:flex;gap:9px;flex-wrap:wrap}
+.contact .tels a{flex:1 1 210px;display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid #d7e0ee;border-radius:10px;text-decoration:none;color:#12428f}
+.contact .tels a:hover{background:#eef3fb;border-color:#12428f}
+.contact .tels .ic2{width:30px;height:30px;border-radius:50%;background:#eef3fb;display:grid;place-items:center;flex:0 0 30px;font-size:15px}
+.contact .tels b{display:block;font-size:15px;font-variant-numeric:tabular-nums;line-height:1.35}
+.contact .tels small{display:block;font-size:11px;color:#8b95a6;font-weight:400}
+.contact .addr{margin-top:11px;font-size:12.5px;color:#657288;line-height:1.7}
+.contact .addr a{color:#12428f}
+@media (max-width:640px){
+  .brand{padding:10px 13px;gap:11px}
+  .brand img{width:40px;flex:0 0 40px}
+  .brand b{font-size:14.5px}
+  .brand .tel{flex:1 1 100%;justify-content:center}
+  .contact{padding:15px 16px}
+  .contact .tels a{flex:1 1 100%}
+  .home{margin-top:4vh;padding:26px 18px}
+  .pv{padding:22px 18px}
+  .msg{padding:32px 18px}
+  .pv td:first-child{width:46%}
+}
+@media (max-width:420px){
+  .home form{flex-direction:column}
+}
+.staff{width:860px;max-width:100%;margin:18px auto 0;text-align:center}
+.staff a{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border:1.5px solid rgba(255,255,255,.55);border-radius:999px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;background:rgba(255,255,255,.08)}
+.staff a:hover{background:rgba(255,255,255,.2);border-color:#fff}
+@media print{.staff{display:none}}
 /* Ctrl+P on the customer page prints just the certificate as one A4 sheet (A4 box + fit come from .printpage in cert.js) */
 @media print{
   html,body{background:#fff;margin:0;padding:0;min-width:0}
-  .bar,.foot{display:none}
+  .brand,.bar,.evid,.contact,.foot{display:none}
   .sheet{box-shadow:none}
 }
 </style>
 </head>
 <body>
 <div id="app"><div class="msg" style="color:#555"><p>กำลังตรวจสอบ…</p></div></div>
-<p class="foot">ข้อมูลนี้เป็นข้อมูลส่วนบุคคลด้านสุขภาพ คุ้มครองตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562<br>
-สอบถามเพิ่มเติม โทร. <a href="tel:034110988">034-110-988</a> · <a href="tel:0819023540">081-902-3540</a></p>
+<p class="foot">ข้อมูลนี้เป็นข้อมูลส่วนบุคคลด้านสุขภาพ คุ้มครองตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562</p>
+<p class="staff"><a href="/admin.html">&#128274; สำหรับเจ้าหน้าที่ · เข้าสู่ระบบหลังบ้าน</a></p>
 <script src="/config.js"></script>
 <script src="/cert.js"></script>
 <script>document.head.insertAdjacentHTML("beforeend","<style>"+CERT_CSS+"</style>");</script>
@@ -59,12 +99,46 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
   var tk = q.get('k') || '';
   var app = document.getElementById('app');
 
+  var HOSP_ADDR = '99/26 หมู่ 5 ต.บางน้ำจืด อ.เมืองสมุทรสาคร จ.สมุทรสาคร 74000';
+
+  /* narrow = จัดความกว้างให้ตรงกับการ์ดเนื้อหาของแต่ละหน้า (560px / 860px) */
+  function w(narrow){ return narrow ? ' style="max-width:560px"' : ''; }
+
+  function brandBar(narrow){
+    return '<div class="brand"'+w(narrow)+'>'
+    + '<img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล">'
+    + '<div class="top"><b>โรงพยาบาล ดับเบิ้ลยู เมดิคอล</b>'
+    +   '<span>W MEDICAL HOSPITAL</span>'
+    +   '<i>ระบบตรวจสอบใบรับรองแพทย์ออนไลน์</i></div>'
+    + '<a class="tel" href="tel:034110988">&#9742; 034-110-988</a>'
+    + '</div>';
+  }
+  /* พิกัดสำนักงานใหญ่ 99/26 หมู่ 5 ต.บางน้ำจืด (ที่อยู่เดียวกับบนใบรับรอง)
+     ใช้รูปแบบ Google Maps URLs API ที่ปักหมุดตามพิกัดตรงๆ
+     แทนการค้นหาด้วยข้อความซึ่งอาจไปโผล่สาขาอื่นหรือที่ผิด */
+  var HOSP_GEO = '13.6286116,100.3551941';
+
+  function contactCard(narrow){
+    var map = 'https://www.google.com/maps/search/?api=1&query='
+      + encodeURIComponent(HOSP_GEO);
+    return '<div class="contact"'+w(narrow)+'>'
+    + '<h3>ติดต่อโรงพยาบาล</h3>'
+    + '<div class="sv">ตรวจสุขภาพแรงงานต่างด้าว · ตรวจสุขภาพก่อนเข้าทำงาน · ใบรับรองแพทย์ทุกประเภท</div>'
+    + '<div class="tels">'
+    +   '<a href="tel:034110988"><span class="ic2">&#9742;</span><span><b>034-110-988</b><small>โทรศัพท์สำนักงาน</small></span></a>'
+    +   '<a href="tel:0819023540"><span class="ic2">&#9742;</span><span><b>081-902-3540</b><small>โทรศัพท์มือถือ</small></span></a>'
+    + '</div>'
+    + '<div class="addr">' + HOSP_ADDR + ' · <a href="' + map + '" target="_blank" rel="noopener">ดูแผนที่</a></div>'
+    + '</div>';
+  }
+
   function fail(title, detail){
-    app.innerHTML = '<div class="msg"><h2>'+title+'</h2><p>'+detail+'</p></div>'
-      + '<p class="foot" style="margin-top:14px"><a href="/">← ตรวจสอบใบอื่น</a></p>';
+    app.innerHTML = brandBar()
+      + '<div class="msg"><h2>'+title+'</h2><p>'+detail+'</p></div>'
+      + '<p class="foot" style="margin-top:14px"><a href="/">← ตรวจสอบใบอื่น</a></p>'
+      + contactCard();
   }
   function home(){
-    document.body.style.minWidth = '0';
     app.innerHTML = ''
     + '<div class="home">'
     +   '<img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล">'
@@ -73,7 +147,8 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
     +   '<form id="hf"><input id="hq" inputmode="numeric" placeholder="กรอกเลขที่ใบรับรองแพทย์ 10 หลัก" autofocus><button type="submit">ตรวจสอบ</button></form>'
     +   '<div class="hint">การกรอกเลขที่จะแสดงเฉพาะผลยืนยันขั้นต้น (ใบมีจริง/หมดอายุ/ถูกยกเลิก)<br>'
     +   'หากต้องการดูใบรับรองฉบับเต็ม กรุณาสแกน QR code บนใบรับรอง</div>'
-    + '</div>';
+    + '</div>'
+    + contactCard(true);
     document.getElementById('hf').addEventListener('submit', function(e){
       e.preventDefault();
       var v = document.getElementById('hq').value.replace(/\D/g,'');
@@ -81,13 +156,19 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
     });
   }
   function preview(c){
-    document.body.style.minWidth = '0';
     var s = certStatus(c);
     var conf = c.confirmed
-      ? '<td style="color:#0f7a4d;font-weight:600">✓ ยืนยันโดยเจ้าหน้าที่แล้ว</td>'
-      : '<td style="color:#8a5a00">ยังไม่ได้รับการยืนยันจากเจ้าหน้าที่</td>';
+      ? '<td style="color:#0f7a4d;font-weight:600">✓ แพทย์รับรองผลแล้ว</td>'
+      : '<td style="color:#8a5a00">ยังไม่ได้รับการรับรองจากแพทย์</td>';
+    var labrow = c.lab_verified
+      ? '<tr><td>ผลห้องปฏิบัติการ</td><td style="color:#0f7a4d;font-weight:600">✓ นักเทคนิคการแพทย์รับรองผลแล้ว</td></tr>'
+      : '';
+    var sealrow = c.sealed
+      ? '<tr><td>รหัสผนึกผลตรวจ</td><td style="color:#0f7a4d;font-weight:600">✓ ผนึกไว้เมื่อ '+thDate(c.sealed_at)+'</td></tr>'
+      : '';
     app.innerHTML =
-      '<div class="bar '+s.cls+'" style="width:560px"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
+      brandBar(true)
+      + '<div class="bar '+s.cls+'" style="max-width:560px"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
       + '<div class="pv">'
       + '<h2>✓ ใบรับรองเลขที่ '+esc(c.hn)+' มีอยู่จริงในระบบ</h2>'
       + '<table>'
@@ -95,12 +176,14 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
       + '<tr><td>วันที่ตรวจ</td><td>'+thDate(c.exam_date)+'</td></tr>'
       + '<tr><td>ใช้ได้ถึง</td><td>'+thDate(addDays(c.exam_date, c.valid_days||90))+'</td></tr>'
       + '<tr><td>สถานะ</td><td>'+(c.status==='void'?'<span style="color:#a11d1d;font-weight:600">ถูกยกเลิกโดยโรงพยาบาล</span>':esc(s.head))+'</td></tr>'
-      + '<tr><td>การยืนยันข้อมูล</td>'+conf+'</tr>'
+      + '<tr><td>การรับรองของแพทย์</td>'+conf+'</tr>'
+      + labrow + sealrow
       + '</table>'
       + '<div class="note">เพื่อคุ้มครองข้อมูลส่วนบุคคลของผู้รับการตรวจ หน้านี้แสดงเฉพาะผลยืนยันขั้นต้น<br>'
       + '<b>ต้องการดูใบรับรองฉบับเต็ม (ชื่อ-สกุล รูปถ่าย ผลตรวจ):</b> สแกน QR code บนใบรับรองแพทย์ฉบับจริง</div>'
       + '<div class="again"><a href="/">← ตรวจสอบใบอื่น</a></div>'
-      + '</div>';
+      + '</div>'
+      + contactCard(true);
   }
   if(!hn){ return home(); }
   window.addEventListener('beforeprint', function(){ app.classList.add('printpage'); fitSheets(app); });
@@ -117,9 +200,12 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
       'เลขที่ <b>'+esc(hn)+'</b> ไม่มีอยู่ในระบบ หรือลิงก์ไม่ถูกต้อง<br>กรุณาตรวจสอบอีกครั้ง หรือติดต่อโรงพยาบาลเพื่อยืนยัน'); }
     if(c.preview){ return preview(c); }
     var s = certStatus(c);
-    app.innerHTML =
-      '<div class="bar '+s.cls+'"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
-      + renderCert(c, {});
+    app.innerHTML = brandBar()
+      + '<div class="bar '+s.cls+'"><span class="ic">'+s.ic+'</span><span>'+s.head+'<small>'+s.sub+'</small></span></div>'
+      + evidencePanel(c)
+      + renderCert(c, {})
+      + contactCard();
+    checkLabFiles(c);
   })
   .catch(function(){ fail('เชื่อมต่อระบบไม่ได้','กรุณาลองใหม่อีกครั้ง หรือติดต่อโรงพยาบาล โทร. 034-110-988'); });
 })();

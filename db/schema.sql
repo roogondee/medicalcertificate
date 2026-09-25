@@ -178,3 +178,13 @@ begin
   return v_result;
 end; $$;
 grant execute on function public.verify_certificate(text, text) to anon, authenticated;
+
+-- =====================================================================
+-- อัปเดต (ก.ย. 2569): ผลแล็บตรวจสอบได้
+--   คอลัมน์ lab (jsonb), lab_verified_by/at, seal, sealed_at
+--   ตาราง lab_counters (เลข Lab No. อัตโนมัติ), cert_seal (ลูกโซ่รหัสผนึก)
+--   ฟังก์ชัน next_lab_no(), cert_payload(), seal_certificate()
+--   trigger cert_a_unseal — แก้ผลตรวจเมื่อไหร่ การรับรองหลุดทันที
+--   verify_certificate เพิ่ม lab / seal / seal_ok / seal_revision
+-- >>> รายละเอียดทั้งหมดอยู่ใน db/migration-lab-seal.sql  <<<
+-- =====================================================================

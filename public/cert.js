@@ -12,6 +12,17 @@ var TESTS = [
 ];
 var VAL_COL = { normal:0, no:0, abnormal:1, yes:1, severe:2 };
 
+/* วิธีตรวจมาตรฐานของแต่ละรายการ — แก้รายใบได้ที่ lab.methods ในหน้า admin */
+var LAB_METHODS = {
+  tb:        'เอกซเรย์ทรวงอก (CXR)',
+  leprosy:   'ตรวจร่างกายโดยแพทย์',
+  filaria:   'ตรวจร่างกายโดยแพทย์',
+  syphilis:  'ตรวจเลือด (RPR/VDRL)',
+  drugs:     'ตรวจปัสสาวะ (Immunoassay)',
+  alcohol:   'ซักประวัติ/ตรวจร่างกายโดยแพทย์',
+  pregnancy: 'ตรวจปัสสาวะ (Urine hCG)'
+};
+
 var HOSP = {
   nameTh:'โรงพยาบาล ดับเบิ้ลยู เมดิคอล',
   license:'10201000265',
@@ -23,12 +34,223 @@ var HOSP = {
 function esc(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"]/g,function(x){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[x]}); }
 function photoUrl(path){ return path ? ((typeof CFG!=='undefined'?CFG.url:'') + '/storage/v1/object/public/' + path) : ''; }
 function photoBox(c){ return c.photo_path ? '<img class="cphoto" src="'+esc(photoUrl(c.photo_path))+'" alt="รูปถ่ายผู้ตรวจ">' : ''; }
-function confirmBadge(c){
-  if(c.confirmed_at){
-    var who = c.confirmed_by_email ? ' ('+esc(c.confirmed_by_email)+')' : '';
-    return '<div class="confirmbadge ok">&#10003; ยืนยันข้อมูลโดยเจ้าหน้าที่'+who+' เมื่อ '+thDate(c.confirmed_at)+'</div>';
+/* ---------- ผลแล็บตรวจสอบได้: ไทม์ไลน์ + ข้อมูลห้องปฏิบัติการ + รหัสผนึกผล ---------- */
+function labOf(c){ return (c && c.lab) || {}; }
+/* เจ้าหน้าที่มักพิมพ์ "ท.น.12345" ลงช่องเลขใบประกอบวิชาชีพ ทั้งที่ใบพิมพ์เติม "ท.น." ให้อยู่แล้ว
+   ตัดคำนำหน้าที่ซ้ำออก เพื่อไม่ให้ขึ้นเป็น "ท.น. ท.น.12345" */
+function mtLic(L){
+  var v = L && L.mt_license ? String(L.mt_license).trim() : '';
+  if(!v) return '';
+  v = v.replace(/^\s*ท\s*\.?\s*น\s*\.?\s*/, '').trim();
+  return v ? ' (ท.น. ' + v + ')' : '';
+}
+function hasLab(c){
+  var L = labOf(c);
+  return !!(L.lab_no || L.reported_at || L.mt_name || L.collected_at || L.xray_no);
+}
+function thTime(iso){
+  if(!iso) return '';
+  var d = new Date(iso);
+  if(isNaN(d)) return '';
+  try { return d.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Bangkok'}) + ' น.'; }
+  catch(e){ return d.toISOString().slice(11,16) + ' น.'; }
+}
+function thDateTime(iso){
+  if(!iso) return '—';
+  var d = new Date(iso);
+  if(isNaN(d)) return thDate(iso);
+  var ymd;
+  try { ymd = d.toLocaleDateString('en-CA', {timeZone:'Asia/Bangkok'}); }
+  catch(e){ ymd = d.toISOString().slice(0,10); }
+  return thDate(ymd) + ' ' + thTime(iso);
+}
+function sealShort(c){ return c && c.seal ? String(c.seal).slice(0,10).toUpperCase() : ''; }
+function methodOf(c, key){
+  var m = labOf(c).methods || {};
+  return m[key] || LAB_METHODS[key] || '';
+}
+/* รายการที่ตรวจจริง พร้อมวิธีตรวจกำกับ */
+function testedList(c){
+  var R = c.results || {};
+  var done = TESTS.filter(function(t){ return R[t[0]] !== undefined && R[t[0]] !== null && R[t[0]] !== ''; });
+  if(!done.length) return '';
+  return '<div class="tested"><b>รายการที่ตรวจจริง ' + done.length + ' รายการ</b> '
+    + done.map(function(t){
+        var m = methodOf(c, t[0]);
+        return esc(t[1].replace('ผลการตรวจ','')) + (m ? ' <i>(' + esc(m) + ')</i>' : '');
+      }).join(' · ')
+    + '</div>';
+}
+/* บรรทัดบอกบนใบพิมพ์ว่ามีผลเอกซเรย์/ผลแล็บฉบับเต็ม (รูป + ผลอ่าน) ให้ดูผ่าน QR — ตัวผลไม่พิมพ์ลงใบ */
+function qrResultsNote(c, standalone){
+  var parts = [];
+  var nx = labFilesOf(c,'xray').length, nl = labFilesOf(c,'lab').length;
+  if(hasXray(c)) parts.push('ผลเอกซเรย์' + (nx ? ' (' + nx + ' รูป)' : ''));
+  if(hasLabResults(c)) parts.push('ผลแล็บ' + (nl ? ' (' + nl + ' ไฟล์)' : ''));
+  if(!parts.length) return '';
+  var txt = 'มี' + parts.join(' และ ') + 'พร้อมผลอ่านในระบบ — สแกน QR มุมขวาบนเพื่อเปิดดูรูปและผลอ่านฉบับเต็ม';
+  return standalone ? '<div class="labfilenote solo">' + txt + '</div>' : '<div class="labfilenote">' + txt + '</div>';
+}
+/* บล็อกข้อมูลห้องปฏิบัติการบนใบพิมพ์ — ไม่มีข้อมูลแล็บ = ไม่แสดงอะไรเลย */
+function labBlock(c){
+  if(!hasLab(c)) return testedList(c) + qrResultsNote(c, true);
+  var L = labOf(c);
+  var row = function(k, v){ return v ? '<span class="k">' + k + '</span><span class="v2">' + esc(v) + '</span>' : ''; };
+  var mt = L.mt_name ? L.mt_name + mtLic(L) : '';
+  return '<div class="labbox">'
+    + '<div class="labhd">ผลตรวจทางห้องปฏิบัติการ · ตรวจที่ห้องปฏิบัติการของ' + esc(HOSP.nameTh) + '</div>'
+    + '<div class="labgrid">'
+    +   row('เลขที่สิ่งส่งตรวจ (Lab No.)', L.lab_no)
+    +   row('เลขที่ฟิล์มเอกซเรย์', L.xray_no)
+    +   row('เก็บสิ่งส่งตรวจ', thDateTime(L.collected_at))
+    +   row('รายงานผล', thDateTime(L.reported_at))
+    +   row('ผู้รายงานผล', mt)
+    + '</div>'
+    + testedList(c)
+    + qrResultsNote(c, false)
+    + (c.seal
+        ? '<div class="sealline">รหัสผนึกผล <b>' + esc(sealShort(c)) + '</b>'
+          + (c.sealed_at ? ' · ผนึกเมื่อ ' + thDateTime(c.sealed_at) : '')
+          + ' · สแกน QR มุมขวาบนเพื่อตรวจสอบว่าผลไม่ถูกแก้ย้อนหลัง</div>'
+        : '')
+    + '</div>';
+}
+/* ไทม์ไลน์การตรวจ — ใช้บนหน้าตรวจสอบของลูกค้า */
+function timelineHtml(c){
+  var L = labOf(c);
+  var ev = [
+    [L.registered_at, 'ลงทะเบียน / ยืนยันตัวผู้รับการตรวจ', c.photo_path ? 'มีรูปถ่ายขณะเข้ารับการตรวจ' : ''],
+    [L.collected_at,  'เก็บสิ่งส่งตรวจ (เลือด / ปัสสาวะ)', L.lab_no ? 'Lab No. ' + L.lab_no : ''],
+    [L.xray_at,       'เอกซเรย์ทรวงอก', L.xray_no ? 'ฟิล์มเลขที่ ' + L.xray_no : ''],
+    [L.reported_at,   'ห้องปฏิบัติการรายงานผล',
+        (L.mt_name ? 'ผู้รายงานผล ' + L.mt_name + mtLic(L) : '')],
+    [c.lab_verified_at, 'นักเทคนิคการแพทย์รับรองผลแล็บ', ''],
+    [c.confirmed_at,  'แพทย์รับรองผลการตรวจ', c.doctor_name ? c.doctor_name + ' (' + c.doctor_license + ')' : ''],
+    [c.sealed_at,     'ผนึกผลตรวจ (ออกรหัสตรวจสอบ)', c.seal ? 'รหัส ' + sealShort(c) : '']
+  ].filter(function(e){ return e[0]; });
+  if(!ev.length) return '';
+  return '<div class="tl"><h3>ไทม์ไลน์การตรวจจริง</h3>'
+    + ev.map(function(e){
+        return '<div class="tlrow"><span class="t">' + esc(thTime(e[0]) || thDate(e[0])) + '</span>'
+          + '<span class="d"><b>' + esc(e[1]) + '</b>' + (e[2] ? '<small>' + esc(e[2]) + '</small>' : '') + '</span></div>';
+      }).join('')
+    + '</div>';
+}
+/* ไฟล์ผลตรวจ (รูปฟิล์มเอกซเรย์ / รูปใบรายงานผลแล็บ / PDF) — แต่ละไฟล์มี kind = 'xray' | 'lab'
+   ไฟล์เก่าที่ยังไม่มี kind ให้ถือเป็นผลแล็บ */
+function labFiles(c){ var f = labOf(c).files; return (f && f.length) ? f : []; }
+function fileKind(f){ return (f && f.kind === 'xray') ? 'xray' : 'lab'; }
+function labFilesOf(c, kind){ return labFiles(c).filter(function(f){ return fileKind(f) === kind; }); }
+function isImgFile(f){
+  return ((f.type||'').indexOf('image/') === 0) || /\.(jpe?g|png|webp|gif)$/i.test(f.path || '');
+}
+/* มีผลเอกซเรย์/ผลแล็บให้ลูกค้าดูหรือไม่ (รูปหรือผลอ่านอย่างใดอย่างหนึ่ง) */
+function hasXray(c){ var L = labOf(c); return !!(labFilesOf(c,'xray').length || L.xray_reading || L.xray_result); }
+function hasLabResults(c){ var L = labOf(c); return !!(labFilesOf(c,'lab').length || L.lab_reading || L.lab_result); }
+function resultBadge(v){
+  if(v === 'normal')   return '<span class="rsbadge ok">&#10003; ผลปกติ</span>';
+  if(v === 'abnormal') return '<span class="rsbadge bad">&#9888; พบความผิดปกติ</span>';
+  return '';
+}
+/* การ์ดไฟล์ 1 ใบ — i คือ index ในรายการ lab.files ทั้งหมด (ใช้ผูกกับ checkLabFiles) */
+function labFileCard(f, i, big){
+  var url = photoUrl(f.path);
+  return '<a class="lf' + (big ? ' big' : '') + '" href="' + esc(url) + '" target="_blank" rel="noopener">'
+    + (isImgFile(f) ? '<img src="' + esc(url) + '" alt="' + esc(f.name || '') + '" loading="lazy">' : '<span class="pdf">PDF</span>')
+    + '<b>' + esc(f.name || (fileKind(f) === 'xray' ? 'ฟิล์มเอกซเรย์' : 'ใบรายงานผลห้องปฏิบัติการ')) + '</b>'
+    + '<small id="lfck' + i + '" class="ck">' + (f.sha256 ? 'กำลังตรวจสอบไฟล์…' : 'กดเพื่อเปิดดู / บันทึก') + '</small>'
+    + '</a>';
+}
+/* ส่วนผลเอกซเรย์ + ผลแล็บบนหน้าตรวจสอบของลูกค้า (เห็นเฉพาะเมื่อสแกน QR เท่านั้น — ไม่ขึ้นบนใบพิมพ์) */
+function resultsSection(c, kind){
+  var L = labOf(c);
+  var all = labFiles(c);
+  var isX = kind === 'xray';
+  if(isX ? !hasXray(c) : !hasLabResults(c)) return '';
+  var reading = isX ? L.xray_reading : L.lab_reading;
+  var result  = isX ? L.xray_result  : L.lab_result;
+  var meta = [];
+  if(isX){
+    if(L.xray_no) meta.push('ฟิล์มเลขที่ ' + L.xray_no);
+    if(L.xray_at) meta.push('ถ่ายเมื่อ ' + thDateTime(L.xray_at));
+    if(L.xray_reader) meta.push('ผู้อ่านฟิล์ม ' + L.xray_reader);
+  } else {
+    if(L.lab_no) meta.push('Lab No. ' + L.lab_no);
+    if(L.collected_at) meta.push('เก็บสิ่งส่งตรวจ ' + thDateTime(L.collected_at));
+    if(L.reported_at) meta.push('รายงานผล ' + thDateTime(L.reported_at));
+    if(L.mt_name) meta.push('ผู้รายงานผล ' + L.mt_name + mtLic(L));
   }
-  return '<div class="confirmbadge wait">ข้อมูลชุดนี้ยังไม่ได้รับการยืนยันจากเจ้าหน้าที่ — กรุณาตรวจสอบกับโรงพยาบาลโดยตรงหากมีข้อสงสัย</div>';
+  var cards = [];
+  all.forEach(function(f, i){ if(fileKind(f) === kind) cards.push(labFileCard(f, i, isX)); });
+  return '<div class="rs ' + (isX ? 'rs-xray' : 'rs-lab') + '">'
+    + '<h3>' + (isX ? 'ผลเอกซเรย์ทรวงอก' : 'ผลตรวจทางห้องปฏิบัติการ') + resultBadge(result) + '</h3>'
+    + (meta.length ? '<div class="rsmeta">' + esc(meta.join(' · ')) + '</div>' : '')
+    + (cards.length ? '<div class="lfgrid' + (isX ? ' xg' : '') + '">' + cards.join('') + '</div>' : '')
+    + (reading
+        ? '<div class="rsread"><b>' + (isX ? 'ผลอ่านฟิล์ม' : 'ผลอ่าน / สรุปผลแล็บ') + '</b>' + esc(reading) + '</div>'
+        : '<div class="rsread none">ยังไม่มีผลอ่านในระบบ</div>')
+    + '</div>';
+}
+function labFilesHtml(c){
+  var x = resultsSection(c, 'xray'), l = resultsSection(c, 'lab');
+  if(!x && !l) return '';
+  return '<div class="lfiles">' + x + l
+    + '<p class="lfnote">กดที่รูปเพื่อเปิดดูเต็มหน้าจอหรือบันทึกลงเครื่อง'
+    + ' · ระบบจะโหลดไฟล์มาคำนวณรหัสใหม่แล้วเทียบกับรหัสที่ผนึกไว้ให้เห็นกับตา'
+    + ' · ผลเอกซเรย์และผลแล็บฉบับเต็มนี้แสดงเฉพาะเมื่อสแกน QR จากใบรับรองฉบับจริงเท่านั้น</p></div>';
+}
+/* โหลดไฟล์มาคำนวณ sha256 ใหม่ แล้วเทียบกับค่าที่ผนึกไว้ — เรียกหลังใส่ HTML ลงหน้าแล้ว */
+function checkLabFiles(c){
+  var fs = labFiles(c);
+  if(!fs.length || !(window.crypto && crypto.subtle)) return;
+  fs.forEach(function(f, i){
+    var el = document.getElementById('lfck' + i);
+    if(!el || !f.sha256) return;
+    fetch(photoUrl(f.path))
+      .then(function(r){ if(!r.ok) throw new Error('load'); return r.arrayBuffer(); })
+      .then(function(buf){ return crypto.subtle.digest('SHA-256', buf); })
+      .then(function(h){
+        var hex = Array.prototype.map.call(new Uint8Array(h), function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
+        var ok = hex.toLowerCase() === String(f.sha256).toLowerCase();
+        el.textContent = ok ? '✓ ไฟล์ตรงกับที่ผนึกไว้' : '⚠ ไฟล์ไม่ตรงกับที่ผนึกไว้';
+        el.className = 'ck ' + (ok ? 'ok' : 'bad');
+      })
+      .catch(function(){ el.textContent = 'รหัสไฟล์ ' + String(f.sha256).slice(0,8).toUpperCase(); el.className = 'ck'; });
+  });
+}
+
+/* แผงหลักฐานบนหน้าตรวจสอบของลูกค้า (QR) */
+function evidencePanel(c){
+  var tl = timelineHtml(c);
+  var files = labFilesHtml(c);
+  var seal = '';
+  if(c.seal){
+    seal = c.seal_ok === false
+      ? '<div class="seal bad"><b>⚠ ข้อมูลผลตรวจไม่ตรงกับรหัสผนึก</b><small>ผลตรวจชุดนี้ถูกแก้ไขหลังการผนึก กรุณาติดต่อโรงพยาบาลเพื่อขอใบฉบับล่าสุด</small></div>'
+      : '<div class="seal ok"><b>✓ ผลตรวจตรงกับรหัสผนึก ' + esc(sealShort(c)) + '</b><small>ผนึกเมื่อ ' + esc(thDateTime(c.sealed_at))
+        + (c.seal_revision > 1 ? ' · ผนึกครั้งที่ ' + c.seal_revision + ' (มีการแก้ไขและรับรองใหม่)' : '')
+        + ' — ไม่มีการแก้ไขข้อมูลย้อนหลัง</small></div>';
+  }
+  if(!tl && !seal && !files) return '';
+  return '<div class="evid">' + seal + files + tl + '</div>';
+}
+function confirmBadge(c){
+  var L = labOf(c);
+  var parts = [];
+  if(c.lab_verified_at){
+    parts.push('ผลแล็บรับรองโดย ' + esc(L.mt_name || 'นักเทคนิคการแพทย์')
+      + esc(mtLic(L)) + ' ' + thDate(c.lab_verified_at));
+  }
+  if(c.confirmed_at){
+    parts.push('แพทย์รับรองผลโดย ' + esc(c.doctor_name) + ' (' + esc(c.doctor_license) + ') ' + thDate(c.confirmed_at));
+  }
+  if(c.seal){
+    parts.push('รหัสผนึกผล ' + esc(sealShort(c)));
+  }
+  if(parts.length){
+    return '<div class="confirmbadge ok">&#10003; ' + parts.join(' · ') + '</div>';
+  }
+  return '<div class="confirmbadge wait">ข้อมูลชุดนี้ยังไม่ได้รับการรับรองในระบบ — กรุณาตรวจสอบกับโรงพยาบาลโดยตรงหากมีข้อสงสัย</div>';
 }
 function thDate(iso){ if(!iso) return '—'; var a=String(iso).slice(0,10).split('-').map(Number); return a[2]+' '+TH_M[a[1]-1]+' '+(a[0]+543); }
 function ddmmyyyy(iso){ if(!iso) return ''; var a=String(iso).slice(0,10).split('-'); return a[2]+'-'+a[1]+'-'+a[0]; }
@@ -36,9 +258,12 @@ function addDays(iso,n){ var t=new Date(String(iso).slice(0,10)+'T00:00:00Z'); t
 function today(){ return new Date().toISOString().slice(0,10); }
 function daysLeft(c){ return Math.round((new Date(addDays(c.exam_date, c.valid_days||90)+'T00:00:00Z') - new Date(today()+'T00:00:00Z'))/86400000); }
 
+/* ลายเซ็นแพทย์จะขึ้นก็ต่อเมื่อแพทย์กด "รับรองผล" ในระบบแล้วเท่านั้น
+   (ต้องการให้ขึ้นทุกใบเหมือนเดิม: ลบเงื่อนไข signed ออกจากบรรทัด if) */
 function sigImg(c){
   var n = String((c && c.doctor_name) || '');
-  if(n.indexOf('มานิตย์') >= 0 && n.indexOf('จารุวรรณ') >= 0){
+  var signed = !!(c && c.confirmed_at);
+  if(signed && n.indexOf('มานิตย์') >= 0 && n.indexOf('จารุวรรณ') >= 0){
     return '<img class="sig" src="/sign.png" alt="">';
   }
   return '<span class="sig"></span>';
@@ -49,6 +274,27 @@ function certStatus(c){
   if(n < 0) return {cls:'bad', ic:'&#10005;', head:'ใบรับรองหมดอายุแล้ว', sub:'หมดอายุเมื่อ '+thDate(exp)+' ('+(-n)+' วันที่ผ่านมา)'};
   if(n <= 14) return {cls:'wn', ic:'!', head:'ใบรับรองใกล้หมดอายุ', sub:'เหลืออีก '+n+' วัน · หมดอายุ '+thDate(exp)};
   return {cls:'ok', ic:'&#10003;', head:'ใบรับรองถูกต้อง · ยังไม่หมดอายุ', sub:'เหลืออีก '+n+' วัน · หมดอายุ '+thDate(exp)};
+}
+
+/* ลายเซ็นท้ายใบ: มีผลแล็บ = ลงนาม 2 ชั้น (ผู้รายงานผลแล็บ + แพทย์) */
+function signRow(c){
+  var L = labOf(c);
+  var doc = '<div class="sign"><div class="role">แพทย์ผู้ตรวจ</div>'+sigImg(c)
+    + '<div class="line">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div></div>';
+  if(!L.mt_name) return doc;
+  return '<div class="signs">'
+    + '<div class="sign"><div class="role">ผู้รายงานผลห้องปฏิบัติการ</div><span class="sig"></span>'
+    + '<div class="line">('+esc(L.mt_name)+esc(mtLic(L))+')</div></div>'
+    + doc + '</div>';
+}
+
+/* มุมขวาบน: QR + คำบอกว่าสแกนไปทำอะไร + เลขที่ใบ + รูปถ่ายผู้ตรวจ */
+function qrCorner(c, opts){
+  opts = opts || {};
+  var qr = opts.qrId
+    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="qrcap">สแกนตรวจสอบว่าเป็นใบจริง<br>และดูผลแล็บที่ตรวจจริง</div>'
+    : '';
+  return qr + '<div class="hn">เลขที่ใบ '+esc(c.hn)+'</div>' + photoBox(c);
 }
 
 /* opts.qrId = element id to mount a QR into (print view); opts.qrUrl = url to encode */
@@ -75,15 +321,13 @@ function renderCert(c, opts){
   var s2 = c.summary==='treat'   ? '&#10003;' : '';
   var s3 = c.summary==='fail'    ? '&#10003;' : '';
 
-  var corner = opts.qrId
-    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c)
-    : '<div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c);
+  var corner = qrCorner(c, opts);
 
   return ''
   + '<div class="sheet">'
   + '<div class="hdr"><div class="lg"><img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล"></div>'
   + '<div class="info">'+esc(HOSP.nameTh)+' ใบอนุญาตให้ดำเนินการสถานพยาบาลเลขที่ '+esc(HOSP.license)+'<br>ที่อยู่ '+esc(HOSP.addr)+'<br>โทร. '+esc(HOSP.tel)+'</div>'
-  + '<div class="qrcol"><span class="qlb">เลขที่บัตรสถานพยาบาล</span>'+corner+'</div></div>'
+  + '<div class="qrcol">'+corner+'</div></div>'
   + '<h1>ใบรับรองแพทย์</h1>'
   + '<div class="subrow"><div class="sub">การตรวจสุขภาพคนต่างด้าว/แรงงานต่างด้าว</div><div class="date">วันที่ '+thDate(c.exam_date)+'</div></div>'
   + '<div class="sec">๑. รายละเอียด/ประวัติส่วนตัวของผู้รับการตรวจสุขภาพ</div>'
@@ -101,6 +345,7 @@ function renderCert(c, opts){
   + '<div class="fld"><span class="lb">สภาพร่างกาย จิตใจทั่วไป</span><span class="v">'+esc(c.general_condition)+'</span></div>'
   + '<table>'+rows+'</table>'
   + '<div class="fld"><span class="lb">ผลตรวจอื่นๆ (ถ้ามี)</span><span class="v">'+(c.other_results?esc(c.other_results):'–')+'</span></div>'
+  + labBlock(c)
   + '<div class="ctr">สรุปผลการตรวจ</div>'
   + '<div class="sum"><ol>'
   + '<li><span class="n">1)</span><span class="bx">'+s1+'</span> สุขภาพสมบูรณ์ดี</li>'
@@ -110,14 +355,14 @@ function renderCert(c, opts){
   + '<li class="ind">3.1 ร่างกายทุพพลภาพจึงไม่สามารถประกอบการหาเลี้ยงชีพได้ / จิตฟั่นเฟือน ไม่สมประกอบ</li>'
   + '<li class="ind">3.2 เป็นโรคไม่อนุญาตให้ทำงาน และไม่ให้การประกันสุขภาพ (ตามประกาศกระทรวงสาธารณสุขฯ)</li>'
   + '</ol></div>'
-  + '<div class="sign"><div class="role">แพทย์ผู้ตรวจ</div>'+sigImg(c)+'<div class="line">('+esc(c.doctor_name)+' ('+esc(c.doctor_license)+'))</div></div>'
-  + '<div class="note">( ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||90)+' วัน นับแต่วันที่ตรวจร่างกาย )</div>'
+  + signRow(c)
+  + '<div class="note">( ใบรับรองแพทย์ฉบับนี้ให้ใช้ได้ '+(c.valid_days||90)+' วัน นับแต่วันที่ตรวจร่างกาย — ใช้ได้ถึงวันที่ '+thDate(addDays(c.exam_date, c.valid_days||90))+' )</div>'
   + confirmBadge(c)
   + '</div>';
 }
 
 var CERT_CSS = ''
-+ '.sheet{width:860px;margin:0 auto;background:#fff;padding:26px 30px 22px;font-size:13.5px;line-height:1.5;color:#000}'
++ '.sheet{width:100%;max-width:860px;margin:0 auto;background:#fff;padding:26px 30px 22px;font-size:13.5px;line-height:1.5;color:#000}'
 + '.sheet *{box-sizing:border-box}'
 + '.hdr{display:flex;gap:12px;align-items:flex-start}'
 + '.hdr .lg{flex:0 0 62px;text-align:center}'
@@ -151,7 +396,57 @@ var CERT_CSS = ''
 + '.sign{margin-top:22px;text-align:center}.sign .role{font-weight:600}'
 + '.sign .line{margin:2px auto 0;width:260px;border-top:1px dotted #666;padding-top:3px;font-weight:600}'
 + '.sign .sig{display:block;height:44px;margin:6px auto -8px}'
-+ '.note{text-align:center;font-size:12px;margin-top:14px}';
++ '.note{text-align:center;font-size:12px;margin-top:14px}'
++ '.qrcap{font-size:9.5px;font-weight:600;line-height:1.35;color:#12428f;margin-top:1px}'
++ '.signs{display:flex;gap:18px;justify-content:space-around;align-items:flex-start}'
++ '.signs .sign{flex:1}'
++ '.labbox{margin-top:10px;border:1px solid #9bb0cd;border-radius:7px;padding:7px 10px;font-size:11.5px;line-height:1.55;background:#f7fafe}'
++ '.labhd{font-weight:700;color:#0b2f68;margin-bottom:3px;font-size:12px}'
++ '.labgrid{display:flex;flex-wrap:wrap;gap:1px 14px}'
++ '.labgrid .k{color:#4a5a72}.labgrid .v2{font-weight:700;margin-left:4px}'
++ '.labgrid .k:after{content:""}'
++ '.tested{margin-top:3px;padding-top:3px;border-top:1px dotted #9bb0cd}'
++ '.tested i{font-style:normal;color:#4a5a72}'
++ '.sealline{margin-top:3px;padding-top:3px;border-top:1px dotted #9bb0cd;letter-spacing:.2px}'
++ '.sealline b{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;letter-spacing:1.2px}'
+/* แผงหลักฐานบนหน้าตรวจสอบของลูกค้า (ไม่ใช้ตอนพิมพ์) */
++ '.evid{width:100%;max-width:860px;margin:10px auto 0;background:#fff;border-radius:12px;padding:18px 22px;box-shadow:0 4px 20px rgba(0,0,0,.25);font-size:13.5px}'
++ '.evid .seal{border-radius:9px;padding:10px 14px;margin-bottom:14px}'
++ '.evid .seal b{display:block;font-size:14.5px}'
++ '.evid .seal small{display:block;margin-top:2px;line-height:1.6}'
++ '.evid .seal.ok{background:#e7f6ee;color:#0b5c3a}'
++ '.evid .seal.bad{background:#fdecec;color:#8f1b1b}'
++ '.evid h3{font-size:14.5px;color:#0b2f68;margin:0 0 8px}'
++ '.tlrow{display:flex;gap:12px;padding:7px 0;border-left:2px solid #d7e0ee;margin-left:6px;padding-left:14px;position:relative}'
++ '.tlrow:before{content:"";position:absolute;left:-6px;top:13px;width:9px;height:9px;border-radius:50%;background:#12428f}'
++ '.tlrow .t{flex:0 0 78px;font-weight:700;color:#12428f;font-variant-numeric:tabular-nums}'
++ '.tlrow .d b{display:block;font-weight:600}'
++ '.tlrow .d small{color:#657288}'
++ '.labfilenote{margin-top:3px;padding-top:3px;border-top:1px dotted #9bb0cd}'
++ '.labfilenote.solo{border-top:0;margin-top:6px;padding:4px 8px;font-size:11.5px;color:#0b2f68;background:#f7fafe;border:1px dashed #9bb0cd;border-radius:6px}'
++ '.lfiles{margin-bottom:16px}'
++ '.rs{margin-bottom:18px;padding:12px 14px;border:1px solid #d7e0ee;border-radius:12px;background:#fbfcfe}'
++ '.rs h3{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}'
++ '.rs-xray h3:before{content:"";width:8px;height:8px;border-radius:50%;background:#12428f}'
++ '.rs-lab h3:before{content:"";width:8px;height:8px;border-radius:50%;background:#0f7a4d}'
++ '.rsmeta{font-size:12.5px;color:#657288;margin-bottom:10px;line-height:1.6}'
++ '.rsbadge{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:99px}'
++ '.rsbadge.ok{background:#e7f6ee;color:#0f7a4d}.rsbadge.bad{background:#fdecec;color:#a11d1d}'
++ '.rsread{margin-top:10px;background:#fff;border-left:3px solid #12428f;border-radius:0 8px 8px 0;padding:10px 14px;white-space:pre-wrap;line-height:1.7;font-size:13.5px}'
++ '.rs-lab .rsread{border-left-color:#0f7a4d}'
++ '.rsread b{display:block;font-size:12px;color:#657288;margin-bottom:2px}'
++ '.rsread.none{color:#98a2b5;font-style:italic;border-left-color:#d7e0ee}'
++ '.lfgrid.xg .lf.big{flex:1 1 260px;max-width:100%}'
++ '.lf.big img{height:auto;max-height:560px;object-fit:contain;background:#111}'
++ '.lfgrid{display:flex;gap:12px;flex-wrap:wrap}'
++ '.lf{flex:0 0 168px;display:block;text-decoration:none;color:inherit;border:1px solid #d7e0ee;border-radius:10px;padding:8px;background:#f7fafe}'
++ '.lf img{width:100%;height:112px;object-fit:cover;border-radius:6px;display:block;background:#e7edf6}'
++ '.lf .pdf{display:grid;place-items:center;height:112px;border-radius:6px;background:#e7edf6;color:#12428f;font-weight:700;font-size:20px}'
++ '.lf b{display:block;font-size:12.5px;margin-top:6px;line-height:1.4}'
++ '.lf .ck{display:block;font-size:11.5px;color:#657288;margin-top:2px}'
++ '.lf .ck.ok{color:#0f7a4d;font-weight:600}.lf .ck.bad{color:#a11d1d;font-weight:600}'
++ '.lfnote{font-size:12px;color:#657288;margin-top:8px;line-height:1.65}'
++ '@media print{.evid{display:none}}';
 
 /* ---------- form 2: ใบรับรองแพทย์ 5 โรค ---------- */
 var CO = {
@@ -231,15 +526,11 @@ function thDay(iso){ if(!iso) return ''; return String(Number(String(iso).slice(
 function thMonth(iso){ if(!iso) return ''; return TH_M[Number(String(iso).slice(5,7))-1]; }
 function thYear(iso){ if(!iso) return ''; return String(Number(String(iso).slice(0,4))+543); }
 
-function cornerOf(c, opts){
-  return opts.qrId
-    ? '<div id="'+opts.qrId+'" class="qrbox"></div><div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c)
-    : '<div class="hn">HN '+esc(c.hn)+'</div>'+photoBox(c);
-}
+function cornerOf(c, opts){ return qrCorner(c, opts); }
 function hospHeader(corner){
   return '<div class="hdr"><div class="lg"><img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล"></div>'
   + '<div class="info">'+esc(HOSP.nameTh)+' ใบอนุญาตให้ดำเนินการสถานพยาบาลเลขที่ '+esc(HOSP.license)+'<br>ที่อยู่ '+esc(HOSP.addr)+'<br>โทร. '+esc(HOSP.tel)+'</div>'
-  + '<div class="qrcol"><span class="qlb">เลขที่บัตรสถานพยาบาล</span>'+corner+'</div></div>';
+  + '<div class="qrcol">'+corner+'</div></div>';
 }
 
 /* ---------- form 3: ใบรับรองการตรวจรักษา (ใบลาป่วย) ---------- */
@@ -362,12 +653,66 @@ CERT_CSS += ''
 + '.fsign .nm{font-weight:700;width:230px;margin-left:auto;text-align:center}'
 + '.rem{font-size:12px;margin-top:14px;line-height:1.6}.rem .pad{display:inline-block;padding-left:52px}';
 
+/* ---------- จอเล็ก (มือถือ/แท็บเล็ต) — ใช้เฉพาะบนหน้าจอ ไม่แตะการพิมพ์ A4 ---------- */
+CERT_CSS += ''
++ '@media screen and (max-width:900px){'
++   '.sheet{padding:18px 14px 16px;font-size:14px}'
+/* หัวกระดาษ: โลโก้ + ข้อมูล รพ. + คอลัมน์ QR/รูป ให้ห่อบรรทัดได้ */
++   '.hdr,.fhdr{flex-wrap:wrap;gap:8px}'
++   '.hdr .lg,.fhdr .lg{flex:0 0 46px}'
++   '.hdr .lg img,.fhdr .lg img{width:44px}'
++   '.hdr .info{flex:1 1 60%;font-size:12px}'
++   '.fhdr .co{flex:1 1 60%;font-size:12px}'
++   '.hdr .qrcol,.five .qrcol{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;font-size:11px}'
++   '.hdr .hn{margin-top:0}'
++   '.cphoto{margin:0}'
+/* วันที่เคยลอยทับหัวเรื่องเพราะ position:absolute */
++   '.subrow{flex-wrap:wrap;justify-content:center}'
++   '.date{position:static;width:100%;text-align:center;margin-top:2px}'
+/* ช่องกรอกแบบเส้นประ */
++   '.fld{margin-left:0}'
++   '.v{min-width:90px}'
++   '.dot.fill{min-width:100%}'
++   '.w180,.w220,.w260{min-width:110px}'
++   '.nid i{width:15px;height:19px;line-height:18px;margin:0}'
+/* ตารางผลตรวจ 4 คอลัมน์ล้นจอ -> เรียงเป็นบล็อกทีละรายการ */
++   '.sheet table{display:block;font-size:13.5px}'
++   '.sheet tbody,.sheet tr{display:block;width:100%}'
++   '.sheet tr{padding:6px 0;border-bottom:1px solid #eef1f5}'
++   '.sheet tr:last-child{border-bottom:0}'
++   '.sheet td{display:block;padding:0}'
++   '.sheet tr td:first-child{font-weight:600;margin-bottom:2px}'
++   'td.o{display:inline-block;width:auto;text-align:left;padding:0 14px 0 0}'
+/* รายการ/ย่อหน้าที่เยื้องลึกเกินไปสำหรับจอแคบ */
++   '.sum .ind{margin-left:24px}'
++   '.dis{margin-left:24px}'
++   '.five p.l.i{margin-left:12px}'
++   '.five5{margin-left:22px}'
++   '.snlist{columns:1;margin-left:20px}'
++   '.bilist{margin-left:20px}'
++   '.bilist li .en{margin-left:0}'
++   '.rem .pad{padding-left:0}'
+/* ลายเซ็น */
++   '.sign .line{width:auto;max-width:260px}'
++   '.fsign{margin:14px 0 0}'
++   '.fsign .sig{margin-right:40px}'
++   '.fsign .line,.fsign .nm{width:100%;max-width:230px}'
+/* พาเนลหลักฐานผลแล็บ */
++   '.evid{padding:15px 16px}'
++   '.tlrow{flex-wrap:wrap;gap:2px 12px;padding-left:12px}'
++   '.tlrow .t{flex:0 0 100%}'
++   '.lfgrid{gap:10px}'
++   '.lf{flex:1 1 100%}'
++   '.lf img,.lf .pdf{height:150px}'
++ '}';
+
 /* ---------- one-page A4 print layout ----------
    Put the certificate(s) inside a container with class "printpage": every .sheet
    becomes a fixed 210×297mm page (margins come from the sheet's own padding, so
    @page margin is 0). Typography is slightly tighter than the on-screen sheet so
    all six forms fit at scale 1; fitSheets() then shrinks anything that still
-   overflows (very long names/addresses) so a certificate never spills to page 2. */
+   overflows (very long names/addresses) so a certificate never spills to page 2.
+   Corner: QR and patient photo side by side, then the QR caption and HN below. */
 CERT_CSS += ''
 + '@page{size:A4;margin:0}'
 + '.printpage .sheet{box-sizing:border-box;width:210mm;height:297mm;margin:0;padding:9mm 11mm 8mm;overflow:hidden;box-shadow:none;border-radius:0;font-size:12.5px;line-height:1.45}'
@@ -376,8 +721,9 @@ CERT_CSS += ''
 + '.printpage .hdr .info{font-size:11.5px;line-height:1.55}'
 + '.printpage .fhdr .co{font-size:12px}.printpage .fhdr .co b{font-size:14px}'
 + '.printpage .qrcol,.printpage .five .qrcol{flex:0 0 150px;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;align-content:flex-start;gap:2px 6px;font-size:11px}'
-+ '.printpage .qlb,.printpage .hn{flex:0 0 100%}'
-+ '.printpage .hn{order:3;margin-top:0;font-size:12px}'
++ '.printpage .qrcap,.printpage .hn{flex:0 0 100%}'
++ '.printpage .qrcap{order:3;margin-top:2px;font-size:9px;line-height:1.3}'
++ '.printpage .hn{order:4;margin-top:0;font-size:12px}'
 + '.printpage .qrbox{margin:0;width:80px;height:80px}'
 + '.printpage .qrbox img,.printpage .qrbox canvas{width:80px !important;height:80px !important}'
 + '.printpage .cphoto{order:2;width:60px;height:80px;margin:0;border-radius:4px}'
@@ -392,6 +738,8 @@ CERT_CSS += ''
 + '.printpage .confirmbadge{margin-top:8px;padding:4px 8px}'
 + '.printpage .fsign{margin-top:10px}'
 + '.printpage .rem{margin-top:10px}'
++ '.printpage .labbox{margin-top:6px;padding:5px 8px;line-height:1.4}'
++ '.printpage .labfilenote.solo{margin-top:4px;padding:3px 8px}'
 + '@media print{'
 + '.printpage .sheet{page-break-after:always;break-after:page}'
 + '.printpage>:last-child>.sheet,.printpage>.sheet:last-child{page-break-after:auto;break-after:auto}'
