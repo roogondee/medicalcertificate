@@ -6,10 +6,10 @@
 
 ```
 public/
-  index.html   หน้าตรวจสอบสำหรับลูกค้า (เปิดจาก QR)  →  /?id=<HN>&k=<token>
-  admin.html   ระบบหลังบ้านสำหรับเจ้าหน้าที่           →  /admin.html
+  index.html   หน้าตรวจสอบสำหรับลูกค้า (เปิดจาก QR)  →  https://cert.roogondee.com/?id=<HN>&k=<token>
+  admin.html   ระบบหลังบ้านสำหรับเจ้าหน้าที่           →  https://cert.roogondee.com/admin.html
   cert.js      ตัวเรนเดอร์ใบรับรอง (ใช้ร่วมกันทั้ง 2 หน้า) + CSS
-  config.js    URL และ anon key ของ Supabase
+  config.js    URL และ anon key ของ Supabase + โดเมนหลัก (`site`) ที่ใช้สร้างลิงก์/QR
 vercel.json    ตั้ง framework = null (เว็บ static)
 db/schema.sql  โครงฐานข้อมูล + RLS + ฟังก์ชันตรวจสอบสาธารณะ (รันไปแล้ว)
 ```
@@ -48,9 +48,12 @@ db/schema.sql  โครงฐานข้อมูล + RLS + ฟังก์�
 
 ## deploy
 
-Vercel project: `medicalcertificate`
-เชื่อม repo นี้กับ project แล้ว push ได้เลย — Vercel จะ deploy อัตโนมัติ
-Root Directory เว้นว่าง, Framework Preset = Other
+- โดเมนหลัก: **https://cert.roogondee.com** (ผูกกับ Vercel project `medicalcertificate` แล้ว)
+- QR และลิงก์ "ดูหน้าลูกค้า" ทุกอันชี้ไปที่ `CFG.site` ใน `public/config.js` เสมอ
+  ดังนั้นแม้เปิดหน้า admin จากโดเมน `*.vercel.app` หรือ preview deployment
+  QR ที่พิมพ์ออกมาก็ยังชี้ไปที่ cert.roogondee.com — ถ้าย้ายโดเมนให้แก้ค่านี้ที่เดียว
+- เชื่อม repo นี้กับ project แล้ว push ได้เลย — Vercel จะ deploy อัตโนมัติ
+  Root Directory เว้นว่าง, Framework Preset = Other
 
 ## ความปลอดภัย
 
