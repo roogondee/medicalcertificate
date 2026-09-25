@@ -8,6 +8,7 @@
 public/
   index.html   หน้าตรวจสอบสำหรับลูกค้า (เปิดจาก QR)  →  /?id=<HN>&k=<token>
   admin.html   ระบบหลังบ้านสำหรับเจ้าหน้าที่           →  /admin.html
+  checklist.html ใบตรวจสอบก่อนออกใบรับรอง (แรงงานต่างด้าว) พิมพ์แปะหน้าแฟ้ม → /checklist.html
   cert.js      ตัวเรนเดอร์ใบรับรอง (ใช้ร่วมกันทั้ง 2 หน้า) + CSS
   config.js    URL และ anon key ของ Supabase
 vercel.json    ตั้ง framework = null (เว็บ static)
