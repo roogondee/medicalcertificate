@@ -41,6 +41,8 @@ nav .wrap{display:flex;gap:2px;overflow-x:auto}
 nav button{background:none;color:var(--mu);border-radius:0;border-bottom:2.5px solid transparent;padding:12px 14px;white-space:nowrap}
 nav button:hover{background:var(--bl);color:var(--b)}
 nav button.on{color:var(--b);border-bottom-color:var(--b)}
+nav a.lnk{color:var(--mu);text-decoration:none;font-weight:600;padding:12px 14px;white-space:nowrap;border-bottom:2.5px solid transparent;margin-left:auto}
+nav a.lnk:hover{background:var(--bl);color:var(--b)}
 main{padding:20px 0 60px}
 .card{background:#fff;border:1px solid var(--ln);border-radius:14px;padding:18px;margin-bottom:16px}
 .card h2{font-size:15px;margin-bottom:12px}
@@ -66,6 +68,13 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
 .chk input{width:auto}
 .hide{display:none!important}
 .hint{font-size:12px;color:var(--mu);margin-top:6px}
+.fthumbs{display:flex;flex-wrap:wrap;gap:8px}
+.fthumb{width:118px;border:1px solid var(--ln);border-radius:9px;padding:5px;background:#fafbfd;font-size:11.5px;text-align:center}
+.fthumb a{display:block;color:inherit;text-decoration:none}
+.fthumb img{width:100%;height:82px;object-fit:cover;border-radius:6px;display:block;background:#e7edf6}
+.fthumb .pdf{display:grid;place-items:center;height:82px;border-radius:6px;background:#e7edf6;color:var(--b);font-weight:700}
+.fthumb .nm{display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fthumb button{margin-top:4px;width:100%}
 #printarea{display:none}
 @media print{
   body{background:#fff}
@@ -110,6 +119,7 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
   <button data-t="import">นำเข้า Excel/CSV</button>
   <button data-t="report">รายงาน</button>
   <button data-t="audit">ประวัติการแก้ไข</button>
+  <a class="lnk" href="/checklist.html" target="_blank" rel="noopener">🖨 ใบ Checklist แพทย์ (ต่างด้าว)</a>
 </div></nav>
 
 <main class="wrap">
@@ -219,15 +229,46 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
             <div><label>เวลาห้องแล็บรายงานผล</label><input id="l-reported_at" type="time"></div>
           </div>
           <p class="hint" style="margin-top:6px">เวลาทั้งหมดคิดเป็นเวลาของวันที่ตรวจ (ตามช่อง “วันที่ตรวจ” ด้านบน) — ไทม์ไลน์นี้คือสิ่งที่ลูกค้าเห็นว่าเราตรวจจริง</p>
-          <div class="row" style="margin-top:10px;align-items:flex-start">
-            <div style="flex:0 0 330px">
-              <label>ไฟล์ผลตรวจจากห้องปฏิบัติการ (รูปใบรายงานผล / ฟิล์มเอกซเรย์ / PDF)</label>
-              <input type="file" id="l-file" accept="image/*,application/pdf" multiple>
+        </fieldset>
+        <fieldset><legend>ผลเอกซเรย์ (รูปฟิล์ม + ผลอ่าน)</legend>
+          <p class="hint" style="margin:-4px 0 8px">ส่วนนี้<b>ไม่พิมพ์ลงใบ</b> — ลูกค้าจะเห็นรูปและผลอ่านฉบับเต็มเฉพาะเมื่อสแกน QR บนใบรับรองเข้ามาดูในระบบเท่านั้น</p>
+          <div class="row" style="align-items:flex-start">
+            <div style="flex:0 0 300px">
+              <label>รูปฟิล์มเอกซเรย์ (รูปภาพ / PDF แนบได้หลายไฟล์)</label>
+              <input type="file" id="l-xray-file" accept="image/*,application/pdf" multiple>
+              <div class="hint" id="xrayfile-status" style="margin-top:4px"></div>
+            </div>
+            <div style="flex:1"><label>รูปที่แนบไว้แล้ว</label><div id="xrayfiles" class="fthumbs"></div></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div style="flex:0 0 200px"><label>สรุปผลเอกซเรย์</label>
+              <select id="l-xray_result"><option value="">— ยังไม่ระบุ —</option><option value="normal">ปกติ (Normal)</option><option value="abnormal">พบความผิดปกติ (Abnormal)</option></select></div>
+            <div><label>ผู้อ่านฟิล์ม (รังสีแพทย์ / แพทย์)</label><input id="l-xray_reader" placeholder="เช่น นพ.มานิตย์ จารุวรรณ"></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div style="flex:1"><label>ผลอ่านฟิล์มเอกซเรย์ (พิมพ์ตามใบรายงานผล)</label>
+              <textarea id="l-xray_reading" rows="3" placeholder="เช่น Chest PA: Both lungs are clear. Heart size is normal. No active pulmonary disease."></textarea></div>
+          </div>
+        </fieldset>
+        <fieldset><legend>ผลตรวจทางห้องปฏิบัติการ (รูปใบรายงานผล + ผลอ่าน)</legend>
+          <p class="hint" style="margin:-4px 0 8px">ส่วนนี้<b>ไม่พิมพ์ลงใบ</b>เช่นกัน — แสดงบนหน้าที่ลูกค้าสแกน QR เข้ามาดู พร้อมผลเอกซเรย์ด้านบนครบทั้งชุด</p>
+          <div class="row" style="align-items:flex-start">
+            <div style="flex:0 0 300px">
+              <label>รูปใบรายงานผลแล็บ (รูปภาพ / PDF แนบได้หลายไฟล์)</label>
+              <input type="file" id="l-lab-file" accept="image/*,application/pdf" multiple>
               <div class="hint" id="labfile-status" style="margin-top:4px"></div>
             </div>
-            <div style="flex:1"><label>ไฟล์ที่แนบไว้แล้ว</label><div id="labfiles"></div></div>
+            <div style="flex:1"><label>ไฟล์ที่แนบไว้แล้ว</label><div id="labfiles" class="fthumbs"></div></div>
           </div>
-          <p class="hint" style="margin-top:6px">ลูกค้าที่สแกน QR จะเปิดดูและบันทึกไฟล์เหล่านี้ได้ — ระบบเก็บรหัส sha256 ของทุกไฟล์ไว้ในรหัสผนึก หน้าตรวจสอบจะคำนวณใหม่แล้วเทียบให้ลูกค้าเห็นว่าไฟล์ไม่ถูกสลับ</p>
+          <div class="row" style="margin-top:8px">
+            <div style="flex:0 0 200px"><label>สรุปผลแล็บ</label>
+              <select id="l-lab_result"><option value="">— ยังไม่ระบุ —</option><option value="normal">ปกติ (Normal)</option><option value="abnormal">พบความผิดปกติ (Abnormal)</option></select></div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <div style="flex:1"><label>ผลอ่าน / สรุปผลแล็บ (พิมพ์ตามใบรายงานผล)</label>
+              <textarea id="l-lab_reading" rows="4" placeholder="เช่น CBC: ปกติ · VDRL: Non-reactive · Urine amphetamine: Negative · Microfilaria: Not found"></textarea></div>
+          </div>
+          <p class="hint" style="margin-top:6px">ระบบเก็บรหัส sha256 ของทุกไฟล์ไว้ในรหัสผนึก — หน้าที่ลูกค้าเปิดจาก QR จะคำนวณใหม่แล้วเทียบให้เห็นว่าไฟล์ไม่ถูกสลับ · แก้รูปหรือผลอ่านหลังผนึกแล้ว ต้องรับรองผลและผนึกใหม่</p>
         </fieldset>
         <fieldset class="only-alien"><legend>ผลการตรวจ</legend><div id="tests" class="row"></div>
           <div class="row" style="margin-top:8px"><div><label>ผลตรวจอื่นๆ (ถ้ามี)</label><input id="f-other_results"></div></div>
@@ -627,7 +668,7 @@ function applyFormType(){
   });
 }
 /* ข้อมูลห้องปฏิบัติการ — เก็บรวมในคอลัมน์ lab (jsonb) */
-var LABF = ['lab_no','xray_no','mt_name','mt_license'];
+var LABF = ['lab_no','xray_no','mt_name','mt_license','xray_result','xray_reader','xray_reading','lab_result','lab_reading'];
 var LABT = ['registered_at','collected_at','xray_at','reported_at'];
 function tzTime(iso){
   if(!iso) return '';
@@ -685,26 +726,36 @@ $('f-photo').addEventListener('change', function(e){
 });
 
 /* ---------- ไฟล์ผลตรวจจากห้องปฏิบัติการ ---------- */
+/* ไฟล์ทุกไฟล์อยู่ในรายการเดียว (lab.files) แยกชนิดด้วย kind = 'xray' | 'lab' — ไฟล์เก่าไม่มี kind ถือเป็น 'lab' */
 var LABFILES = [];
+var FILE_BOX = { xray: 'xrayfiles', lab: 'labfiles' };
+var FILE_STATUS = { xray: 'xrayfile-status', lab: 'labfile-status' };
 function drawLabFiles(){
-  var box = $('labfiles');
-  if(!LABFILES.length){ box.innerHTML = '<span class="hint">ยังไม่มีไฟล์แนบ</span>'; return; }
-  box.innerHTML = LABFILES.map(function(f, i){
-    return '<div style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:12.5px">'
-      + '<a href="'+esc(photoUrl(f.path))+'" target="_blank" rel="noopener" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name||f.path)+'</a>'
-      + '<span class="hint" style="flex:0 0 auto">'+esc(String(f.sha256||'').slice(0,8).toUpperCase())+'</span>'
-      + '<button type="button" class="gh sm labf-del" data-i="'+i+'" style="flex:0 0 auto">ลบ</button>'
-      + '</div>';
-  }).join('');
-  Array.prototype.forEach.call(box.querySelectorAll('.labf-del'), function(b){
+  ['xray','lab'].forEach(function(kind){
+    var box = $(FILE_BOX[kind]);
+    var items = [];
+    LABFILES.forEach(function(f, i){ if(fileKind(f) === kind) items.push([f, i]); });
+    if(!items.length){ box.innerHTML = '<span class="hint">ยังไม่มีไฟล์แนบ</span>'; return; }
+    box.innerHTML = items.map(function(it){
+      var f = it[0], i = it[1], url = photoUrl(f.path);
+      return '<div class="fthumb">'
+        + '<a href="'+esc(url)+'" target="_blank" rel="noopener" title="'+esc(f.name||f.path)+'">'
+        + (isImgFile(f) ? '<img src="'+esc(url)+'" alt="">' : '<span class="pdf">PDF</span>')
+        + '<span class="nm">'+esc(f.name||f.path)+'</span></a>'
+        + '<span class="hint" style="display:block;margin-top:0">'+esc(String(f.sha256||'').slice(0,8).toUpperCase())+'</span>'
+        + '<button type="button" class="gh sm labf-del" data-i="'+i+'">ลบ</button>'
+        + '</div>';
+    }).join('');
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.labf-del'), function(b){
     b.addEventListener('click', function(){
       var i = Number(b.dataset.i), f = LABFILES[i];
-      if(!confirm('ลบไฟล์ "'+(f.name||f.path)+'" ออกจากใบนี้?')) return;
+      if(!f || !confirm('ลบไฟล์ "'+(f.name||f.path)+'" ออกจากใบนี้?')) return;
       fetch(CFG.url + '/storage/v1/object/' + f.path, {
         method: 'DELETE', headers: { 'apikey': CFG.key, 'Authorization': 'Bearer ' + TOK }
       }).catch(function(){});
       LABFILES.splice(i, 1); drawLabFiles();
-      $('labfile-status').textContent = 'ลบไฟล์แล้ว — กด “บันทึก” เพื่อให้มีผลกับใบรับรอง';
+      $(FILE_STATUS[fileKind(f)]).textContent = 'ลบไฟล์แล้ว — กด “บันทึก” เพื่อให้มีผลกับใบรับรอง';
     });
   });
 }
@@ -737,7 +788,7 @@ function shrinkImage(file){
     reader.readAsDataURL(file);
   });
 }
-function uploadLabFile(file){
+function uploadLabFile(file, kind){
   var isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name || '');
   var prep = isPdf ? Promise.resolve({blob: file, ext: 'pdf', type: 'application/pdf'}) : shrinkImage(file);
   return prep.then(function(o){
@@ -749,23 +800,30 @@ function uploadLabFile(file){
         body: o.blob
       }).then(function(r){
         if(!r.ok) throw new Error('อัปโหลด "'+(file.name||'')+'" ไม่สำเร็จ');
-        LABFILES.push({ path: path, name: file.name || 'ผลตรวจห้องปฏิบัติการ', type: o.type, sha256: hex, at: new Date().toISOString() });
+        LABFILES.push({ kind: kind === 'xray' ? 'xray' : 'lab', path: path,
+          name: file.name || (kind === 'xray' ? 'ฟิล์มเอกซเรย์' : 'ใบรายงานผลห้องปฏิบัติการ'),
+          type: o.type, sha256: hex, at: new Date().toISOString() });
       });
     });
   });
 }
-$('l-file').addEventListener('change', function(e){
-  var files = Array.prototype.slice.call(e.target.files || []);
-  if(!files.length) return;
-  $('labfile-status').textContent = 'กำลังอัปโหลด ' + files.length + ' ไฟล์…';
-  files.reduce(function(chain, f){ return chain.then(function(){ return uploadLabFile(f); }); }, Promise.resolve())
-    .then(function(){
-      drawLabFiles();
-      $('labfile-status').textContent = 'อัปโหลดแล้ว — กด “บันทึก” เพื่อผูกไฟล์เข้ากับใบรับรอง';
-    })
-    .catch(function(err){ drawLabFiles(); $('labfile-status').textContent = err.message; })
-    .then(function(){ e.target.value = ''; });
-});
+function bindFileInput(inputId, kind){
+  $(inputId).addEventListener('change', function(e){
+    var files = Array.prototype.slice.call(e.target.files || []);
+    if(!files.length) return;
+    var st = $(FILE_STATUS[kind]);
+    st.textContent = 'กำลังอัปโหลด ' + files.length + ' ไฟล์…';
+    files.reduce(function(chain, f){ return chain.then(function(){ return uploadLabFile(f, kind); }); }, Promise.resolve())
+      .then(function(){
+        drawLabFiles();
+        st.textContent = 'อัปโหลดแล้ว — กด “บันทึก” เพื่อผูกไฟล์เข้ากับใบรับรอง';
+      })
+      .catch(function(err){ drawLabFiles(); st.textContent = err.message; })
+      .then(function(){ e.target.value = ''; });
+  });
+}
+bindFileInput('l-xray-file', 'xray');
+bindFileInput('l-lab-file', 'lab');
 
 /* ---------- dd/mm/yyyy date fields ---------- */
 function parseDMY(v){
@@ -808,7 +866,7 @@ function resetForm(){
   $('printone').classList.add('hide'); $('voidbtn').classList.add('hide'); $('confirmbtn').classList.add('hide');
   $('f-photo_path').value=''; setPhotoPreview(''); $('photo-status').textContent=''; $('confirminfo').textContent='';
   LABF.concat(LABT).forEach(function(f){ var el=$('l-'+f); if(el) el.value=''; });
-  LABFILES = []; drawLabFiles(); $('labfile-status').textContent='';
+  LABFILES = []; drawLabFiles(); $('labfile-status').textContent=''; $('xrayfile-status').textContent='';
   $('labinfo').textContent=''; $('sealinfo').textContent='';
   $('labbtn').classList.add('hide'); $('sealbtn').classList.add('hide');
   $('eerr').textContent=''; $('eok').textContent='';
@@ -839,7 +897,7 @@ function editCert(hn){
   var LB = c.lab || {};
   LABF.forEach(function(f){ var el=$('l-'+f); if(el) el.value = LB[f] || ''; });
   LABT.forEach(function(f){ var el=$('l-'+f); if(el) el.value = tzTime(LB[f]); });
-  LABFILES = (LB.files || []).slice(); drawLabFiles(); $('labfile-status').textContent='';
+  LABFILES = (LB.files || []).slice(); drawLabFiles(); $('labfile-status').textContent=''; $('xrayfile-status').textContent='';
   setPhotoPreview(c.photo_path); $('photo-status').textContent='';
   $('printone').classList.remove('hide');
   $('voidbtn').classList.remove('hide');

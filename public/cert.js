@@ -81,9 +81,19 @@ function testedList(c){
       }).join(' · ')
     + '</div>';
 }
+/* บรรทัดบอกบนใบพิมพ์ว่ามีผลเอกซเรย์/ผลแล็บฉบับเต็ม (รูป + ผลอ่าน) ให้ดูผ่าน QR — ตัวผลไม่พิมพ์ลงใบ */
+function qrResultsNote(c, standalone){
+  var parts = [];
+  var nx = labFilesOf(c,'xray').length, nl = labFilesOf(c,'lab').length;
+  if(hasXray(c)) parts.push('ผลเอกซเรย์' + (nx ? ' (' + nx + ' รูป)' : ''));
+  if(hasLabResults(c)) parts.push('ผลแล็บ' + (nl ? ' (' + nl + ' ไฟล์)' : ''));
+  if(!parts.length) return '';
+  var txt = 'มี' + parts.join(' และ ') + 'พร้อมผลอ่านในระบบ — สแกน QR มุมขวาบนเพื่อเปิดดูรูปและผลอ่านฉบับเต็ม';
+  return standalone ? '<div class="labfilenote solo">' + txt + '</div>' : '<div class="labfilenote">' + txt + '</div>';
+}
 /* บล็อกข้อมูลห้องปฏิบัติการบนใบพิมพ์ — ไม่มีข้อมูลแล็บ = ไม่แสดงอะไรเลย */
 function labBlock(c){
-  if(!hasLab(c)) return testedList(c);
+  if(!hasLab(c)) return testedList(c) + qrResultsNote(c, true);
   var L = labOf(c);
   var row = function(k, v){ return v ? '<span class="k">' + k + '</span><span class="v2">' + esc(v) + '</span>' : ''; };
   var mt = L.mt_name ? L.mt_name + mtLic(L) : '';
@@ -97,9 +107,7 @@ function labBlock(c){
     +   row('ผู้รายงานผล', mt)
     + '</div>'
     + testedList(c)
-    + (labFiles(c).length
-        ? '<div class="labfilenote">แนบไฟล์ผลตรวจจากห้องปฏิบัติการ ' + labFiles(c).length + ' ไฟล์ในระบบ — สแกน QR เพื่อเปิดดูหรือบันทึกไฟล์ต้นฉบับ</div>'
-        : '')
+    + qrResultsNote(c, false)
     + (c.seal
         ? '<div class="sealline">รหัสผนึกผล <b>' + esc(sealShort(c)) + '</b>'
           + (c.sealed_at ? ' · ผนึกเมื่อ ' + thDateTime(c.sealed_at) : '')
@@ -128,27 +136,68 @@ function timelineHtml(c){
       }).join('')
     + '</div>';
 }
-/* ไฟล์ผลตรวจจากห้องปฏิบัติการ (ใบรายงานผล / ฟิล์มเอกซเรย์) */
+/* ไฟล์ผลตรวจ (รูปฟิล์มเอกซเรย์ / รูปใบรายงานผลแล็บ / PDF) — แต่ละไฟล์มี kind = 'xray' | 'lab'
+   ไฟล์เก่าที่ยังไม่มี kind ให้ถือเป็นผลแล็บ */
 function labFiles(c){ var f = labOf(c).files; return (f && f.length) ? f : []; }
+function fileKind(f){ return (f && f.kind === 'xray') ? 'xray' : 'lab'; }
+function labFilesOf(c, kind){ return labFiles(c).filter(function(f){ return fileKind(f) === kind; }); }
 function isImgFile(f){
   return ((f.type||'').indexOf('image/') === 0) || /\.(jpe?g|png|webp|gif)$/i.test(f.path || '');
 }
+/* มีผลเอกซเรย์/ผลแล็บให้ลูกค้าดูหรือไม่ (รูปหรือผลอ่านอย่างใดอย่างหนึ่ง) */
+function hasXray(c){ var L = labOf(c); return !!(labFilesOf(c,'xray').length || L.xray_reading || L.xray_result); }
+function hasLabResults(c){ var L = labOf(c); return !!(labFilesOf(c,'lab').length || L.lab_reading || L.lab_result); }
+function resultBadge(v){
+  if(v === 'normal')   return '<span class="rsbadge ok">&#10003; ผลปกติ</span>';
+  if(v === 'abnormal') return '<span class="rsbadge bad">&#9888; พบความผิดปกติ</span>';
+  return '';
+}
+/* การ์ดไฟล์ 1 ใบ — i คือ index ในรายการ lab.files ทั้งหมด (ใช้ผูกกับ checkLabFiles) */
+function labFileCard(f, i, big){
+  var url = photoUrl(f.path);
+  return '<a class="lf' + (big ? ' big' : '') + '" href="' + esc(url) + '" target="_blank" rel="noopener">'
+    + (isImgFile(f) ? '<img src="' + esc(url) + '" alt="' + esc(f.name || '') + '" loading="lazy">' : '<span class="pdf">PDF</span>')
+    + '<b>' + esc(f.name || (fileKind(f) === 'xray' ? 'ฟิล์มเอกซเรย์' : 'ใบรายงานผลห้องปฏิบัติการ')) + '</b>'
+    + '<small id="lfck' + i + '" class="ck">' + (f.sha256 ? 'กำลังตรวจสอบไฟล์…' : 'กดเพื่อเปิดดู / บันทึก') + '</small>'
+    + '</a>';
+}
+/* ส่วนผลเอกซเรย์ + ผลแล็บบนหน้าตรวจสอบของลูกค้า (เห็นเฉพาะเมื่อสแกน QR เท่านั้น — ไม่ขึ้นบนใบพิมพ์) */
+function resultsSection(c, kind){
+  var L = labOf(c);
+  var all = labFiles(c);
+  var isX = kind === 'xray';
+  if(isX ? !hasXray(c) : !hasLabResults(c)) return '';
+  var reading = isX ? L.xray_reading : L.lab_reading;
+  var result  = isX ? L.xray_result  : L.lab_result;
+  var meta = [];
+  if(isX){
+    if(L.xray_no) meta.push('ฟิล์มเลขที่ ' + L.xray_no);
+    if(L.xray_at) meta.push('ถ่ายเมื่อ ' + thDateTime(L.xray_at));
+    if(L.xray_reader) meta.push('ผู้อ่านฟิล์ม ' + L.xray_reader);
+  } else {
+    if(L.lab_no) meta.push('Lab No. ' + L.lab_no);
+    if(L.collected_at) meta.push('เก็บสิ่งส่งตรวจ ' + thDateTime(L.collected_at));
+    if(L.reported_at) meta.push('รายงานผล ' + thDateTime(L.reported_at));
+    if(L.mt_name) meta.push('ผู้รายงานผล ' + L.mt_name + mtLic(L));
+  }
+  var cards = [];
+  all.forEach(function(f, i){ if(fileKind(f) === kind) cards.push(labFileCard(f, i, isX)); });
+  return '<div class="rs ' + (isX ? 'rs-xray' : 'rs-lab') + '">'
+    + '<h3>' + (isX ? 'ผลเอกซเรย์ทรวงอก' : 'ผลตรวจทางห้องปฏิบัติการ') + resultBadge(result) + '</h3>'
+    + (meta.length ? '<div class="rsmeta">' + esc(meta.join(' · ')) + '</div>' : '')
+    + (cards.length ? '<div class="lfgrid' + (isX ? ' xg' : '') + '">' + cards.join('') + '</div>' : '')
+    + (reading
+        ? '<div class="rsread"><b>' + (isX ? 'ผลอ่านฟิล์ม' : 'ผลอ่าน / สรุปผลแล็บ') + '</b>' + esc(reading) + '</div>'
+        : '<div class="rsread none">ยังไม่มีผลอ่านในระบบ</div>')
+    + '</div>';
+}
 function labFilesHtml(c){
-  var fs = labFiles(c);
-  if(!fs.length) return '';
-  return '<div class="lfiles"><h3>ไฟล์ผลตรวจจากห้องปฏิบัติการ</h3>'
-    + '<div class="lfgrid">'
-    + fs.map(function(f, i){
-        var url = photoUrl(f.path);
-        return '<a class="lf" href="' + esc(url) + '" target="_blank" rel="noopener" download>'
-          + (isImgFile(f) ? '<img src="' + esc(url) + '" alt="">' : '<span class="pdf">PDF</span>')
-          + '<b>' + esc(f.name || 'ผลตรวจห้องปฏิบัติการ') + '</b>'
-          + '<small id="lfck' + i + '" class="ck">' + (f.sha256 ? 'กำลังตรวจสอบไฟล์…' : 'กดเพื่อเปิดดู / บันทึก') + '</small>'
-          + '</a>';
-      }).join('')
-    + '</div>'
-    + '<p class="lfnote">กดที่ไฟล์เพื่อเปิดดูเต็มหน้าจอหรือบันทึกลงเครื่อง'
-    + ' · ระบบจะโหลดไฟล์มาคำนวณรหัสใหม่แล้วเทียบกับรหัสที่ผนึกไว้ให้เห็นกับตา</p></div>';
+  var x = resultsSection(c, 'xray'), l = resultsSection(c, 'lab');
+  if(!x && !l) return '';
+  return '<div class="lfiles">' + x + l
+    + '<p class="lfnote">กดที่รูปเพื่อเปิดดูเต็มหน้าจอหรือบันทึกลงเครื่อง'
+    + ' · ระบบจะโหลดไฟล์มาคำนวณรหัสใหม่แล้วเทียบกับรหัสที่ผนึกไว้ให้เห็นกับตา'
+    + ' · ผลเอกซเรย์และผลแล็บฉบับเต็มนี้แสดงเฉพาะเมื่อสแกน QR จากใบรับรองฉบับจริงเท่านั้น</p></div>';
 }
 /* โหลดไฟล์มาคำนวณ sha256 ใหม่ แล้วเทียบกับค่าที่ผนึกไว้ — เรียกหลังใส่ HTML ลงหน้าแล้ว */
 function checkLabFiles(c){
@@ -374,7 +423,21 @@ var CERT_CSS = ''
 + '.tlrow .d b{display:block;font-weight:600}'
 + '.tlrow .d small{color:#657288}'
 + '.labfilenote{margin-top:3px;padding-top:3px;border-top:1px dotted #9bb0cd}'
++ '.labfilenote.solo{border-top:0;margin-top:6px;padding:4px 8px;font-size:11.5px;color:#0b2f68;background:#f7fafe;border:1px dashed #9bb0cd;border-radius:6px}'
 + '.lfiles{margin-bottom:16px}'
++ '.rs{margin-bottom:18px;padding:12px 14px;border:1px solid #d7e0ee;border-radius:12px;background:#fbfcfe}'
++ '.rs h3{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}'
++ '.rs-xray h3:before{content:"";width:8px;height:8px;border-radius:50%;background:#12428f}'
++ '.rs-lab h3:before{content:"";width:8px;height:8px;border-radius:50%;background:#0f7a4d}'
++ '.rsmeta{font-size:12.5px;color:#657288;margin-bottom:10px;line-height:1.6}'
++ '.rsbadge{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:99px}'
++ '.rsbadge.ok{background:#e7f6ee;color:#0f7a4d}.rsbadge.bad{background:#fdecec;color:#a11d1d}'
++ '.rsread{margin-top:10px;background:#fff;border-left:3px solid #12428f;border-radius:0 8px 8px 0;padding:10px 14px;white-space:pre-wrap;line-height:1.7;font-size:13.5px}'
++ '.rs-lab .rsread{border-left-color:#0f7a4d}'
++ '.rsread b{display:block;font-size:12px;color:#657288;margin-bottom:2px}'
++ '.rsread.none{color:#98a2b5;font-style:italic;border-left-color:#d7e0ee}'
++ '.lfgrid.xg .lf.big{flex:1 1 260px;max-width:100%}'
++ '.lf.big img{height:auto;max-height:560px;object-fit:contain;background:#111}'
 + '.lfgrid{display:flex;gap:12px;flex-wrap:wrap}'
 + '.lf{flex:0 0 168px;display:block;text-decoration:none;color:inherit;border:1px solid #d7e0ee;border-radius:10px;padding:8px;background:#f7fafe}'
 + '.lf img{width:100%;height:112px;object-fit:cover;border-radius:6px;display:block;background:#e7edf6}'
