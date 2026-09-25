@@ -75,14 +75,14 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
 .fthumb .pdf{display:grid;place-items:center;height:82px;border-radius:6px;background:#e7edf6;color:var(--b);font-weight:700}
 .fthumb .nm{display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fthumb button{margin-top:4px;width:100%}
-#printarea{display:none}
+/* print area is kept laid out (off-screen, invisible) so fitSheets() can measure the sheets before printing */
+#printarea{position:absolute;left:-9999px;top:0;visibility:hidden;pointer-events:none}
 @media print{
-  body{background:#fff}
+  html,body{background:#fff;margin:0;padding:0}
   body>*{display:none!important}
-  #printarea{display:block!important}
-  #printarea .sheet{box-shadow:none;page-break-after:always;width:100%;padding:14mm 12mm}
-  #printarea .stickerpage{page-break-after:always}
-  @page{size:A4;margin:8mm}
+  #printarea{display:block!important;position:static;visibility:visible}
+  /* certificate pages: one A4 sheet each — see .printpage in cert.js (@page margin is 0 there) */
+  #printarea .stickerpage{page-break-after:always;break-after:page;padding:8mm}
 }
 .stickerpage{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
 .stk{border:1px dashed #999;border-radius:2mm;padding:3mm;display:flex;gap:3mm;align-items:center;height:32mm;box-sizing:border-box}
@@ -404,7 +404,7 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
 </main>
 </div>
 
-<div id="printarea"></div>
+<div id="printarea" class="printpage"></div>
 
 <script src="/config.js"></script>
 <script src="/cert.js"></script>
@@ -612,7 +612,8 @@ function doPrint(list){
     var el = document.getElementById('qr'+i);
     if(el && window.QRCode) new QRCode(el, { text: certUrl(c), width: 192, height: 192, correctLevel: QRCode.CorrectLevel.M });
   });
-  setTimeout(function(){ window.print(); }, 350);
+  // wait for logo/QR/photo/signature + fonts, then shrink any sheet that would spill past one A4 page
+  whenSheetsReady(pa, function(){ fitSheets(pa); window.print(); });
 }
 function doPrintStickers(list){
   var pa = $('printarea'); pa.innerHTML = '';
