@@ -443,7 +443,7 @@ Array.prototype.forEach.call(document.querySelectorAll('nav button'), function(b
 function goTab(t){ document.querySelector('nav button[data-t="'+t+'"]').click(); }
 
 /* ---------- list ---------- */
-function certUrl(c){ return location.origin + '/?id=' + c.hn + (c.token ? '&k=' + c.token : ''); }
+function certUrl(c){ return (CFG.site || location.origin) + '/?id=' + c.hn + (c.token ? '&k=' + c.token : ''); }
 function stateOf(c){
   if(c.status === 'void') return ['void','ยกเลิกแล้ว','p-bad'];
   var n = daysLeft(c);

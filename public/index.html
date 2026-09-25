@@ -73,11 +73,16 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
 @media (max-width:420px){
   .home form{flex-direction:column}
 }
+.staff{width:860px;max-width:100%;margin:18px auto 0;text-align:center}
+.staff a{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border:1.5px solid rgba(255,255,255,.55);border-radius:999px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;background:rgba(255,255,255,.08)}
+.staff a:hover{background:rgba(255,255,255,.2);border-color:#fff}
+@media print{.staff{display:none}}
 </style>
 </head>
 <body>
 <div id="app"><div class="msg" style="color:#555"><p>กำลังตรวจสอบ…</p></div></div>
 <p class="foot">ข้อมูลนี้เป็นข้อมูลส่วนบุคคลด้านสุขภาพ คุ้มครองตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562</p>
+<p class="staff"><a href="/admin.html">&#128274; สำหรับเจ้าหน้าที่ · เข้าสู่ระบบหลังบ้าน</a></p>
 <script src="/config.js"></script>
 <script src="/cert.js"></script>
 <script>document.head.insertAdjacentHTML("beforeend","<style>"+CERT_CSS+"</style>");</script>
