@@ -37,6 +37,12 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
 .pv .again{text-align:center;margin-top:14px;font-size:13px}
 .foot{width:860px;margin:12px auto 0;text-align:center;color:#fff;font-size:12px;line-height:1.7;text-shadow:0 1px 2px rgba(0,0,0,.3)}
 .foot a{color:#fff}
+/* Ctrl+P on the customer page prints just the certificate as one A4 sheet (A4 box + fit come from .printpage in cert.js) */
+@media print{
+  html,body{background:#fff;margin:0;padding:0;min-width:0}
+  .bar,.foot{display:none}
+  .sheet{box-shadow:none}
+}
 </style>
 </head>
 <body>
@@ -97,6 +103,8 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
       + '</div>';
   }
   if(!hn){ return home(); }
+  window.addEventListener('beforeprint', function(){ app.classList.add('printpage'); fitSheets(app); });
+  window.addEventListener('afterprint',  function(){ app.classList.remove('printpage'); resetSheets(app); });
 
   fetch(CFG.url + '/rest/v1/rpc/verify_certificate', {
     method: 'POST',

@@ -83,7 +83,7 @@ function renderCert(c, opts){
   + '<div class="sheet">'
   + '<div class="hdr"><div class="lg"><img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล"></div>'
   + '<div class="info">'+esc(HOSP.nameTh)+' ใบอนุญาตให้ดำเนินการสถานพยาบาลเลขที่ '+esc(HOSP.license)+'<br>ที่อยู่ '+esc(HOSP.addr)+'<br>โทร. '+esc(HOSP.tel)+'</div>'
-  + '<div class="qrcol">เลขที่บัตรสถานพยาบาล'+corner+'</div></div>'
+  + '<div class="qrcol"><span class="qlb">เลขที่บัตรสถานพยาบาล</span>'+corner+'</div></div>'
   + '<h1>ใบรับรองแพทย์</h1>'
   + '<div class="subrow"><div class="sub">การตรวจสุขภาพคนต่างด้าว/แรงงานต่างด้าว</div><div class="date">วันที่ '+thDate(c.exam_date)+'</div></div>'
   + '<div class="sec">๑. รายละเอียด/ประวัติส่วนตัวของผู้รับการตรวจสุขภาพ</div>'
@@ -239,7 +239,7 @@ function cornerOf(c, opts){
 function hospHeader(corner){
   return '<div class="hdr"><div class="lg"><img src="/logo.png" alt="โรงพยาบาล ดับเบิ้ลยู เมดิคอล"></div>'
   + '<div class="info">'+esc(HOSP.nameTh)+' ใบอนุญาตให้ดำเนินการสถานพยาบาลเลขที่ '+esc(HOSP.license)+'<br>ที่อยู่ '+esc(HOSP.addr)+'<br>โทร. '+esc(HOSP.tel)+'</div>'
-  + '<div class="qrcol">เลขที่บัตรสถานพยาบาล'+corner+'</div></div>';
+  + '<div class="qrcol"><span class="qlb">เลขที่บัตรสถานพยาบาล</span>'+corner+'</div></div>';
 }
 
 /* ---------- form 3: ใบรับรองการตรวจรักษา (ใบลาป่วย) ---------- */
@@ -361,3 +361,83 @@ CERT_CSS += ''
 + '.fsign .sig{display:block;height:44px;margin:6px 90px -10px auto}'
 + '.fsign .nm{font-weight:700;width:230px;margin-left:auto;text-align:center}'
 + '.rem{font-size:12px;margin-top:14px;line-height:1.6}.rem .pad{display:inline-block;padding-left:52px}';
+
+/* ---------- one-page A4 print layout ----------
+   Put the certificate(s) inside a container with class "printpage": every .sheet
+   becomes a fixed 210×297mm page (margins come from the sheet's own padding, so
+   @page margin is 0). Typography is slightly tighter than the on-screen sheet so
+   all six forms fit at scale 1; fitSheets() then shrinks anything that still
+   overflows (very long names/addresses) so a certificate never spills to page 2. */
+CERT_CSS += ''
++ '@page{size:A4;margin:0}'
++ '.printpage .sheet{box-sizing:border-box;width:210mm;height:297mm;margin:0;padding:9mm 11mm 8mm;overflow:hidden;box-shadow:none;border-radius:0;font-size:12.5px;line-height:1.45}'
++ '.printpage .sheet.five{line-height:1.6}'
++ '.printpage .pg{transform-origin:0 0}'
++ '.printpage .hdr .info{font-size:11.5px;line-height:1.55}'
++ '.printpage .fhdr .co{font-size:12px}.printpage .fhdr .co b{font-size:14px}'
++ '.printpage .qrcol,.printpage .five .qrcol{flex:0 0 150px;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;align-content:flex-start;gap:2px 6px;font-size:11px}'
++ '.printpage .qlb,.printpage .hn{flex:0 0 100%}'
++ '.printpage .hn{order:3;margin-top:0;font-size:12px}'
++ '.printpage .qrbox{margin:0;width:80px;height:80px}'
++ '.printpage .qrbox img,.printpage .qrbox canvas{width:80px !important;height:80px !important}'
++ '.printpage .cphoto{order:2;width:60px;height:80px;margin:0;border-radius:4px}'
++ '.printpage .sheet h1{margin:4px 0 0}'
++ '.printpage .sec{margin-top:8px}'
++ '.printpage .ctr{margin:8px 0 3px}'
++ '.printpage .fld{margin-top:4px}'
++ '.printpage .sheet td{padding:1.5px 0}'
++ '.printpage .sum li{margin-top:3px;margin-bottom:3px}'
++ '.printpage .sign{margin-top:12px}'
++ '.printpage .note{margin-top:8px}'
++ '.printpage .confirmbadge{margin-top:8px;padding:4px 8px}'
++ '.printpage .fsign{margin-top:10px}'
++ '.printpage .rem{margin-top:10px}'
++ '@media print{'
++ '.printpage .sheet{page-break-after:always;break-after:page}'
++ '.printpage>:last-child>.sheet,.printpage>.sheet:last-child{page-break-after:auto;break-after:auto}'
++ '}';
+
+/* Scale each .sheet inside `root` (a .printpage container) so its content fits
+   the fixed A4 page. Content is wrapped in a .pg div and scaled with transform,
+   never enlarged. Call again after re-rendering; resetSheets() undoes it. */
+function fitSheets(root){
+  var sheets = (root || document).querySelectorAll('.printpage .sheet');
+  Array.prototype.forEach.call(sheets, function(sh){
+    var pg = sh.firstElementChild;
+    if(!(pg && pg.classList.contains('pg'))){
+      pg = document.createElement('div'); pg.className = 'pg';
+      while(sh.firstChild) pg.appendChild(sh.firstChild);
+      sh.appendChild(pg);
+    }
+    pg.style.transform = ''; pg.style.width = '';
+    var cs = getComputedStyle(sh);
+    var avail = sh.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    var s = 1;
+    for(var i = 0; i < 6; i++){
+      var h = pg.offsetHeight;             // layout height, unaffected by transform
+      if(h * s <= avail + 0.5) break;
+      s = Math.max(0.5, s * avail / h * 0.995);
+      pg.style.width = (100 / s) + '%';    // widen so lines use the full page width at this scale
+      pg.style.transform = 'scale(' + s + ')';
+    }
+  });
+}
+function resetSheets(root){
+  Array.prototype.forEach.call((root || document).querySelectorAll('.sheet > .pg'), function(pg){
+    pg.style.transform = ''; pg.style.width = '';
+  });
+}
+/* Run cb once web fonts and every <img> under root (logo, QR, photo, signature)
+   have loaded, so fitSheets() measures the final layout. Falls back after 3s. */
+function whenSheetsReady(root, cb){
+  var imgs = Array.prototype.slice.call(root.querySelectorAll('img')), done = false, left = imgs.length;
+  function finish(){ if(!done){ done = true; cb(); } }
+  function fontsThen(f){ (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(f, f); }
+  function one(){ if(--left <= 0) fontsThen(finish); }
+  if(!imgs.length) fontsThen(finish);
+  imgs.forEach(function(im){
+    if(im.complete) one();
+    else { im.addEventListener('load', one); im.addEventListener('error', one); }
+  });
+  setTimeout(finish, 3000);
+}
