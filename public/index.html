@@ -35,6 +35,8 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
 .pv td:first-child{color:#657288;width:42%}
 .pv .note{background:#eef3fb;border-radius:10px;padding:12px 16px;font-size:12.5px;color:#0b2f68;margin-top:16px;line-height:1.7}
 .pv .again{text-align:center;margin-top:14px;font-size:13px}
+.promo{display:block;margin-top:18px;padding:12px 14px;border-radius:10px;background:#eef8f2;border:1px solid #cfe9da;color:#0f5a3a;font-size:13px;line-height:1.6;text-decoration:none}
+.promo b{color:#0f7a4d}
 .foot{width:860px;margin:12px auto 0;text-align:center;color:#fff;font-size:12px;line-height:1.7;text-shadow:0 1px 2px rgba(0,0,0,.3)}
 .foot a{color:#fff}
 </style>
@@ -67,6 +69,7 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
     +   '<form id="hf"><input id="hq" inputmode="numeric" placeholder="กรอกเลขที่ใบรับรองแพทย์ 10 หลัก" autofocus><button type="submit">ตรวจสอบ</button></form>'
     +   '<div class="hint">การกรอกเลขที่จะแสดงเฉพาะผลยืนยันขั้นต้น (ใบมีจริง/หมดอายุ/ถูกยกเลิก)<br>'
     +   'หากต้องการดูใบรับรองฉบับเต็ม กรุณาสแกน QR code บนใบรับรอง</div>'
+    +   '<a class="promo" href="https://roogondee.com/medical-certificate?utm_source=cert_verify&utm_medium=referral&utm_campaign=home" target="_blank" rel="noopener">ใบรับรองแพทย์ของ รพ. ดับเบิ้ลยู เมดิคอล ออกหลังตรวจจริงทุกใบ และตรวจสอบได้ด้วย QR<br><b>ต้องการตรวจสุขภาพ / ใบรับรองแพทย์สำหรับพนักงาน →</b></a>'
     + '</div>';
     document.getElementById('hf').addEventListener('submit', function(e){
       e.preventDefault();
@@ -93,6 +96,7 @@ body{min-width:880px;background:#8a8f98;font-family:Sarabun,system-ui,sans-serif
       + '</table>'
       + '<div class="note">เพื่อคุ้มครองข้อมูลส่วนบุคคลของผู้รับการตรวจ หน้านี้แสดงเฉพาะผลยืนยันขั้นต้น<br>'
       + '<b>ต้องการดูใบรับรองฉบับเต็ม (ชื่อ-สกุล รูปถ่าย ผลตรวจ):</b> สแกน QR code บนใบรับรองแพทย์ฉบับจริง</div>'
+      + '<a class="promo" href="https://roogondee.com/medical-certificate?utm_source=cert_verify&utm_medium=referral&utm_campaign=preview" target="_blank" rel="noopener">ใบรับรองแพทย์ของ รพ. ดับเบิ้ลยู เมดิคอล ออกหลังตรวจจริงทุกใบ และตรวจสอบได้ด้วย QR<br><b>ต้องการตรวจสุขภาพ / ใบรับรองแพทย์สำหรับพนักงาน →</b></a>'
       + '<div class="again"><a href="/">← ตรวจสอบใบอื่น</a></div>'
       + '</div>';
   }
