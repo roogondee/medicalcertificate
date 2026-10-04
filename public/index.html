@@ -58,6 +58,8 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
 .contact .tels small{display:block;font-size:11px;color:#8b95a6;font-weight:400}
 .contact .addr{margin-top:11px;font-size:12.5px;color:#657288;line-height:1.7}
 .contact .addr a{color:#12428f}
+.contact .promo{display:block;margin-top:12px;padding:11px 14px;border-radius:10px;background:#eef8f2;border:1px solid #cfe9da;color:#0f5a3a;font-size:12.5px;line-height:1.6;text-decoration:none}
+.contact .promo b{color:#0f7a4d}
 @media (max-width:640px){
   .brand{padding:10px 13px;gap:11px}
   .brand img{width:40px;flex:0 0 40px}
@@ -129,6 +131,10 @@ body{background:#8a8f98;font-family:Sarabun,system-ui,sans-serif;color:#000;padd
     +   '<a href="tel:0819023540"><span class="ic2">&#9742;</span><span><b>081-902-3540</b><small>โทรศัพท์มือถือ</small></span></a>'
     + '</div>'
     + '<div class="addr">' + HOSP_ADDR + ' · <a href="' + map + '" target="_blank" rel="noopener">ดูแผนที่</a></div>'
+    // ลิงก์ไปหน้าขายของ roogondee.com — เฉพาะหน้าค้นหา/หน้าผลขั้นต้น (narrow)
+    // ไม่ขึ้นบนหน้าใบรับรองฉบับเต็ม เพราะหน้านั้นคือเอกสารทางการ
+    + (narrow ? '<a class="promo" href="https://roogondee.com/medical-certificate?utm_source=cert_verify&utm_medium=referral&utm_campaign=contact_card" target="_blank" rel="noopener">'
+      + 'ใบรับรองแพทย์ของเราออกหลังตรวจจริงทุกใบ และตรวจสอบได้ด้วย QR<br><b>ต้องการตรวจสุขภาพ / ใบรับรองแพทย์สำหรับพนักงาน →</b></a>' : '')
     + '</div>';
   }
 
