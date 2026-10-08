@@ -165,7 +165,13 @@ legend{font-size:12px;font-weight:700;color:var(--b);padding:0 6px}
             <option value="sick_leave">ใบรับรองการตรวจรักษา / ใบลาป่วย (1 เดือน)</option>
             <option value="snor11">ใบรับรองแพทย์ แบบ สณ.11 ราชการ (1 เดือน)</option>
             <option value="bilingual">ใบรับรองแพทย์ 2 ภาษา ไทย-อังกฤษ (1 เดือน)</option>
-          </select></div></div>
+          </select></div>
+          <!-- รหัสจากหน้าเว็บ roogondee.com (MC-xxxxx / CL-xxxxx) — ใส่แล้ว roogondee
+               จะนับว่าคนที่คลิกโฆษณามาตรวจจริง (db/roogondee-bridge.sql) ไม่มีผลกับใบรับรอง -->
+          <div style="max-width:260px"><label>รหัสอ้างอิงจากเว็บ (ถ้ามี)</label>
+            <input id="x-ref_code" placeholder="เช่น MC-K7Q2M" maxlength="12" autocomplete="off" style="text-transform:uppercase">
+            <div style="font-size:11.5px;color:#7b8798;margin-top:3px;line-height:1.5">ลูกค้าที่มาจากหน้าเว็บ/LINE จะมีรหัสนี้ ไม่พิมพ์บนใบรับรอง</div>
+          </div></div>
         </fieldset>
         <fieldset><legend>ผู้รับการตรวจ</legend>
           <div class="row">
@@ -652,7 +658,8 @@ function doPrintStickers(list){
 
 var XF = ['book_no','national_id','contact_addr','bp','pulse','exam_place','h_chronic','h_chronic_detail',
   'h_accident','h_accident_detail','h_hospital','h_hospital_detail','h_other','general','general_detail','doctor_opinion',
-  'h_epilepsy','h_epilepsy_detail','symptoms','diagnosis','opinion','position','other_diseases','sn_opinion','license_issued'];
+  'h_epilepsy','h_epilepsy_detail','symptoms','diagnosis','opinion','position','other_diseases','sn_opinion','license_issued',
+  'ref_code'];
 var FORM_SHOW = {
   alien_worker: ['only-alien'],
   five_disease: ['only-five'],
